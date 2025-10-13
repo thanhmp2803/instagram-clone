@@ -1,0 +1,8 @@
+{
+  "workbench.iconTheme": "material-icon-theme",
+  "editor.guides.bracketPairs": true,
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+}

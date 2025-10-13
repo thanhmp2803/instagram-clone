@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "PKief.material-icon-theme",
+    "dbaeumer.vscode-eslint",
+    "formulahendry.auto-rename-tag",
+    "esbenp.prettier-vscode"
+  ]
+}
