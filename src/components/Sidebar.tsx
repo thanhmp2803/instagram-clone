@@ -1,23 +1,26 @@
 'use client'
 import Image from 'next/image'
 import { createSidebarItems } from '@mocks'
+import { useTranslation } from 'react-i18next'
 
 export function Sidebar() {
-  const allItems = createSidebarItems()
+  const { t } = useTranslation()
+  const allItems = createSidebarItems(t)
 
-  // Tách các items theo vị trí
   const filterMainItems = () =>
-    allItems.filter((item) => !['More', 'Also from Meta'].includes(item.label))
+    allItems.filter(
+      (item) => ![t('sidebar.more'), t('sidebar.also_from_meta')].includes(item.label),
+    )
   const filterBottomItems = () =>
-    allItems.filter((item) => ['More', 'Also from Meta'].includes(item.label))
+    allItems.filter((item) => [t('sidebar.more'), t('sidebar.also_from_meta')].includes(item.label))
 
   return (
     <div className="h-screen w-[250px] bg-black text-white flex flex-col justify-between p-4 border-r border-e-zinc-700">
       {/* Logo and Main Menu */}
-      <div>
-        <h1 className="text-3xl font-instagram mb-8 ms-2 cursor-pointer">Instagram</h1>
+      <div className="flex-1">
+        <h1 className="text-3xl font-instagram mt-5 mb-8 ms-2 cursor-pointer">Instagram</h1>
 
-        <nav className="flex flex-col space-y-6">
+        <nav className="flex flex-col space-y-4">
           {filterMainItems().map((item, index) => {
             const Icon = item.icon
             return (
@@ -40,13 +43,13 @@ export function Sidebar() {
               height={24}
               className="rounded-full object-cover"
             />
-            <span className="font-medium">Profile</span>
+            <span className="font-medium">{t('sidebar.profile')}</span>
           </button>
         </nav>
       </div>
 
       {/* Bottom Menu - More and Also from Meta */}
-      <div className="flex flex-col space-y-6">
+      <div className="flex flex-col space-y-4 mt-4 mb-2">
         {filterBottomItems().map((item, index) => {
           const Icon = item.icon
           return (
