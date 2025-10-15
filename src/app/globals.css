@@ -1,1 +1,6 @@
+@import url('https://fonts.googleapis.com/css2?family=Grand+Hotel&display=swap');
 @import "tailwindcss";
+
+.font-instagram {
+  font-family: 'Grand Hotel', cursive;
+}
