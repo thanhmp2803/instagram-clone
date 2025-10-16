@@ -6,15 +6,18 @@ import { I18nProvider } from '@providers'
 export const metadata: Metadata = {
   title: 'Instagram Clone',
   description: 'Instagram clone built with Next.js',
+  icons: {
+    icon: '/images/Instagram_icon.png',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="bg-black text-white flex">
+      <body className="bg-black text-white">
         <I18nProvider>
           <Sidebar />
-          <main className="flex-1">{children}</main>
+          <main className="ml-[250px] overflow-y-auto min-h-screen">{children}</main>
         </I18nProvider>
       </body>
     </html>
