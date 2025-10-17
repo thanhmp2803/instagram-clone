@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Sidebar } from '@components'
-import { I18nProvider } from '@providers'
+import { Sidebar, Header } from '@components'
+import { I18nProvider, SearchProvider } from '@providers'
 
 export const metadata: Metadata = {
   title: 'Instagram Clone',
@@ -16,8 +16,20 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className="bg-black text-white">
         <I18nProvider>
-          <Sidebar />
-          <main className="ml-[250px] overflow-y-auto min-h-screen">{children}</main>
+          <SearchProvider>
+            {/* Header - only on mobile */}
+            <Header />
+
+            {/* Sidebar - hide on mobile */}
+            <div className="hidden lg:block">
+              <Sidebar />
+            </div>
+
+            {/* Main content with responsive margin */}
+            <main className="pt-16 lg:pt-0 lg:ml-[250px] overflow-y-auto min-h-screen">
+              {children}
+            </main>
+          </SearchProvider>
         </I18nProvider>
       </body>
     </html>

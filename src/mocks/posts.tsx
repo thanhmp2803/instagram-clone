@@ -130,14 +130,21 @@ const generateRandomPost = (
   id: number,
   t?: (key: string, options?: { count?: number }) => string,
 ): Post => {
-  const randomUsername = usernames[Math.floor(Math.random() * usernames.length)]
-  const randomCaption = captions[Math.floor(Math.random() * captions.length)]
-  const [timeUnit, timeCount] = timeOptions[Math.floor(Math.random() * timeOptions.length)]
+  // Use deterministic selection based on ID instead of Math.random()
+  const usernameIndex = (id - 1) % usernames.length
+  const captionIndex = (id - 1) % captions.length
+  const timeIndex = (id - 1) % timeOptions.length
+
+  const randomUsername = usernames[usernameIndex]
+  const randomCaption = captions[captionIndex]
+  const [timeUnit, timeCount] = timeOptions[timeIndex]
   const randomTime = t
     ? t(`feed.time.${timeUnit}`, { count: timeCount as number })
     : `${timeCount} ${timeUnit} ago`
-  const randomLikes = Math.floor(Math.random() * 1000) + 1
-  const randomComments = Math.floor(Math.random() * 100) + 1
+
+  // Use deterministic values based on ID
+  const randomLikes = ((id * 37) % 1000) + 1
+  const randomComments = ((id * 17) % 100) + 1
 
   return {
     id,

@@ -11,6 +11,11 @@ const vi = {
     more: 'Thêm',
     also_from_meta: 'Cũng từ Meta',
   },
+  search: {
+    placeholder: 'Tìm kiếm...',
+    no_results: 'Không tìm thấy bài viết',
+    try_different: 'Thử tìm kiếm với từ khóa khác',
+  },
   feed: {
     end: 'Bạn đã xem hết bài viết',
     time: {

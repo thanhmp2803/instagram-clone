@@ -11,6 +11,11 @@ const en = {
     more: 'More',
     also_from_meta: 'Also from Meta',
   },
+  search: {
+    placeholder: 'Search...',
+    no_results: 'No posts found',
+    try_different: 'Try searching for something else',
+  },
   feed: {
     end: 'You have reached the end',
     time: {
