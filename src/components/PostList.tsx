@@ -9,9 +9,9 @@ import { useMounted, useSearch } from '@hooks'
 
 // Skeleton component for post loading
 const PostSkeleton = () => (
-  <div className="bg-black text-white border border-gray-800 rounded-lg mb-6 w-[468px] mx-auto animate-pulse">
+  <div className="bg-black text-white border border-gray-800 rounded-lg mb-4 sm:mb-6 w-full max-w-[468px] mx-auto animate-pulse">
     {/* Header skeleton */}
-    <div className="flex items-center justify-between p-3">
+    <div className="flex items-center justify-between p-2 sm:p-3">
       <div className="flex items-center">
         <div className="w-8 h-8 bg-gray-700 rounded-full"></div>
         <div className="ml-3">
@@ -23,11 +23,11 @@ const PostSkeleton = () => (
     </div>
 
     {/* Image skeleton */}
-    <div className="w-full h-[585px] bg-gray-700"></div>
+    <div className="w-full sm:h-[400px] md:h-[585px] bg-gray-700"></div>
 
     {/* Actions skeleton */}
-    <div className="flex items-center justify-between px-3 py-2">
-      <div className="flex space-x-3">
+    <div className="flex items-center justify-between px-2 sm:px-3 py-2">
+      <div className="flex space-x-2 sm:space-x-3">
         <div className="w-6 h-6 bg-gray-700 rounded"></div>
         <div className="w-6 h-6 bg-gray-700 rounded"></div>
         <div className="w-6 h-6 bg-gray-700 rounded"></div>
@@ -36,7 +36,7 @@ const PostSkeleton = () => (
     </div>
 
     {/* Content skeleton */}
-    <div className="px-3 pb-3">
+    <div className="px-2 sm:px-3 pb-2 sm:pb-3">
       <div className="w-20 h-4 bg-gray-700 rounded mb-2"></div>
       <div className="w-full h-4 bg-gray-700 rounded mb-1"></div>
       <div className="w-3/4 h-4 bg-gray-700 rounded mb-2"></div>
@@ -89,14 +89,18 @@ const PostListInner: React.FC<{
 
   return (
     <>
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto px-2 sm:px-4">
         {filteredPosts.length === 0 && searchTerm.trim() ? (
           <div className="text-center py-12 text-gray-400">
             <p className="text-lg mb-2">{t('search.no_results')}</p>
             <p className="text-sm">{t('search.try_different')}</p>
           </div>
         ) : (
-          visiblePosts.map((post: Post) => <PostCard key={post.id} post={post} />)
+          visiblePosts.map((post: Post) => (
+            <div key={post.id} className="w-full mb-4 sm:mb-6">
+              <PostCard post={post} />
+            </div>
+          ))
         )}
       </div>
 
@@ -128,7 +132,7 @@ export const PostList: React.FC = () => {
   // Show skeleton loading while not ready
   if (!mounted || !ready || posts.length === 0) {
     return (
-      <div className="flex flex-col items-center">
+      <div className="flex flex-col items-center w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto px-2 sm:px-4">
         {Array(3)
           .fill(0)
           .map((_, index) => (
