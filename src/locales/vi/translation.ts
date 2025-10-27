@@ -19,6 +19,7 @@ const vi = {
   feed: {
     end: 'Bạn đã xem hết bài viết',
     time: {
+      just_now: 'Vừa xong',
       minutes: '{{count}} phút trước',
       hours: '{{count}} giờ trước',
       days: '{{count}} ngày trước',
@@ -42,6 +43,16 @@ const vi = {
       about: 'Về tài khoản này',
       cancel: 'Hủy',
     },
+  },
+  create_post: {
+    title: 'Tạo bài viết mới',
+    drag_text: 'Kéo ảnh và video vào đây',
+    select_button: 'Chọn từ thiết bị',
+    back: 'Quay lại',
+    next: 'Tiếp theo',
+    post: 'Đăng',
+    close: 'Đóng',
+    caption_placeholder: 'Thêm chú thích...',
   },
 }
 

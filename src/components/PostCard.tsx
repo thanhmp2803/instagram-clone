@@ -161,8 +161,6 @@ function PostCardContent({ post }: Props) {
 }
 
 // Export dynamic component để tránh hydration mismatch
-const PostCard = dynamic(() => Promise.resolve(PostCardContent), {
+export const PostCard = dynamic(() => Promise.resolve(PostCardContent), {
   ssr: false,
 })
-
-export default PostCard

@@ -3,11 +3,13 @@ import Image from 'next/image'
 import { createSidebarItems } from '@mocks'
 import { useTranslation } from 'react-i18next'
 import { useMounted } from '@hooks'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { CreatePost } from './CreatePost'
 
 export function Sidebar() {
   const mounted = useMounted()
   const { t, ready } = useTranslation()
+  const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
 
   // Memoize sidebar items
   const allItems = useMemo(() => {
@@ -66,9 +68,12 @@ export function Sidebar() {
         <nav className="flex flex-col space-y-4">
           {mainItems.map((item, index) => {
             const Icon = item.icon
+            const isCreateButton = item.label === t('sidebar.create')
+
             return (
               <button
                 key={index}
+                onClick={isCreateButton ? () => setIsCreatePostOpen(true) : undefined}
                 className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer"
               >
                 <Icon size={24} />
@@ -106,6 +111,9 @@ export function Sidebar() {
           )
         })}
       </div>
+
+      {/* CreatePost Modal */}
+      <CreatePost isOpen={isCreatePostOpen} onClose={() => setIsCreatePostOpen(false)} />
     </div>
   )
 }

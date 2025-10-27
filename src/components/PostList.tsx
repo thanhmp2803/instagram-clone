@@ -1,11 +1,11 @@
 'use client'
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Loader } from 'lucide-react'
-import PostCard from './PostCard'
+import { PostCard } from './PostCard'
 import { generatePostData } from '@mocks'
 import type { Post } from '@types'
 import { useTranslation } from 'react-i18next'
-import { useMounted, useSearch } from '@hooks'
+import { useMounted, useSearch, usePost } from '@hooks'
 
 // Skeleton component for post loading
 const PostSkeleton = () => (
@@ -123,11 +123,14 @@ export const PostList: React.FC = () => {
   const { t, ready, i18n } = useTranslation()
   const mounted = useMounted()
   const { searchTerm } = useSearch()
+  const { posts: userPosts } = usePost()
 
-  // Memoize posts generation
+  // Memoize posts generation - combine user posts with mock data
   const posts = useMemo(() => {
-    return mounted && ready ? generatePostData(t) : []
-  }, [mounted, ready, t])
+    const mockPosts = mounted && ready ? generatePostData(t) : []
+    // User posts first, then mock data
+    return [...userPosts, ...mockPosts]
+  }, [mounted, ready, t, userPosts])
 
   // Show skeleton loading while not ready
   if (!mounted || !ready || posts.length === 0) {
@@ -142,10 +145,10 @@ export const PostList: React.FC = () => {
     )
   }
 
-  // Use key to force re-render when language or search changes
+  // Use key to force re-render when language, search, or posts count changes
   return (
     <PostListInner
-      key={`${mounted}-${ready}-${i18n.language}-${searchTerm}`}
+      key={`${mounted}-${ready}-${i18n.language}-${searchTerm}-${posts.length}`}
       posts={posts}
       t={t}
       searchTerm={searchTerm}

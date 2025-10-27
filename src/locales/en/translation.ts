@@ -19,6 +19,7 @@ const en = {
   feed: {
     end: 'You have reached the end',
     time: {
+      just_now: 'Just now',
       minutes: '{{count}} minutes ago',
       hours: '{{count}} hours ago',
       days: '{{count}} days ago',
@@ -42,6 +43,16 @@ const en = {
       about: 'About this account',
       cancel: 'Cancel',
     },
+  },
+  create_post: {
+    title: 'Create new post',
+    drag_text: 'Drag photos and videos here',
+    select_button: 'Select from device',
+    back: 'Back',
+    next: 'Next',
+    post: 'Post',
+    close: 'Close',
+    caption_placeholder: 'Add caption...',
   },
 }
 
