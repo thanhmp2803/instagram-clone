@@ -43,16 +43,16 @@ function PostCardContent({ post }: Props) {
   }
 
   return (
-    <div className="bg-black text-white border border-gray-800 rounded-lg w-[468px] mx-auto">
+    <div className="bg-black text-white border border-gray-800 rounded-lg w-full max-w-[468px] mx-auto px-2 sm:px-0">
       {/* Header */}
-      <div className="flex items-center justify-between p-3">
+      <div className="flex items-center justify-between p-2 sm:p-3">
         <div className="flex items-center">
           <Image
             src={post.avatar}
             alt={post.username}
             width={32}
             height={32}
-            className="rounded-full cursor-pointer"
+            className="w-8 h-8 rounded-full cursor-pointer object-cover aspect-square"
           />
           <div className="ml-3">
             <span className="font-semibold cursor-pointer">{post.username}</span>
@@ -99,14 +99,14 @@ function PostCardContent({ post }: Props) {
           alt="Post"
           width={468}
           height={585}
-          className="object-cover w-full h-auto min-h-[585px]"
+          className="object-cover w-full h-auto sm:min-h-[400px] md:min-h-[585px]"
           loading="lazy"
         />
       </div>
 
       {/* Actions */}
-      <div className="flex items-center justify-between px-3 py-2">
-        <div className="flex space-x-3">
+      <div className="flex items-center justify-between px-2 sm:px-3 py-2">
+        <div className="flex space-x-2 sm:space-x-3">
           <Heart {...likeButtonProps} />
           {otherActions.map((Icon, index) => (
             <Icon key={index} className={iconClassName} />
@@ -116,7 +116,7 @@ function PostCardContent({ post }: Props) {
       </div>
 
       {/* Likes + Caption */}
-      <div className="px-3 pb-3">
+      <div className="px-2 sm:px-3 pb-2 sm:pb-3">
         <p className="font-semibold">
           {likesCount} {t('feed.post.likes')}
         </p>

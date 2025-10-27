@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { Sidebar, Header } from '@components'
+import { Sidebar, Header, BottomNavigation } from '@components'
 import { I18nProvider, SearchProvider } from '@providers'
 
 export const metadata: Metadata = {
@@ -26,9 +26,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             </div>
 
             {/* Main content with responsive margin */}
-            <main className="pt-16 lg:pt-0 lg:ml-[250px] overflow-y-auto min-h-screen">
+            <main className="pt-16 pb-16 lg:pt-0 lg:pb-0 lg:ml-[250px] overflow-y-auto min-h-screen">
               {children}
             </main>
+
+            {/* Bottom Navigation - only on mobile */}
+            <BottomNavigation />
           </SearchProvider>
         </I18nProvider>
       </body>

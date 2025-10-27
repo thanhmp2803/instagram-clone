@@ -3,10 +3,28 @@ import Image from 'next/image'
 import { createSidebarItems } from '@mocks'
 import { useTranslation } from 'react-i18next'
 import { useMounted } from '@hooks'
+import { useMemo } from 'react'
 
 export function Sidebar() {
   const mounted = useMounted()
   const { t, ready } = useTranslation()
+
+  // Memoize sidebar items
+  const allItems = useMemo(() => {
+    return ready ? createSidebarItems(t) : []
+  }, [t, ready])
+
+  const mainItems = useMemo(() => {
+    if (!ready) return []
+    const excludeLabels = [t('sidebar.more'), t('sidebar.also_from_meta')]
+    return allItems.filter((item) => !excludeLabels.includes(item.label))
+  }, [allItems, t, ready])
+
+  const bottomItems = useMemo(() => {
+    if (!ready) return []
+    const includeLabels = [t('sidebar.more'), t('sidebar.also_from_meta')]
+    return allItems.filter((item) => includeLabels.includes(item.label))
+  }, [allItems, t, ready])
 
   // If not mounted or i18n not ready, render skeleton
   if (!mounted || !ready) {
@@ -39,15 +57,6 @@ export function Sidebar() {
     )
   }
 
-  const allItems = createSidebarItems(t)
-
-  const filterMainItems = () =>
-    allItems.filter(
-      (item) => ![t('sidebar.more'), t('sidebar.also_from_meta')].includes(item.label),
-    )
-  const filterBottomItems = () =>
-    allItems.filter((item) => [t('sidebar.more'), t('sidebar.also_from_meta')].includes(item.label))
-
   return (
     <div className="fixed left-0 top-0 h-screen w-[250px] bg-black text-white flex flex-col justify-between p-4 border-r border-e-zinc-700 z-10">
       {/* Logo and Main Menu */}
@@ -55,7 +64,7 @@ export function Sidebar() {
         <h1 className="text-3xl font-instagram mt-5 mb-8 ms-2 cursor-pointer">Instagram</h1>
 
         <nav className="flex flex-col space-y-4">
-          {filterMainItems().map((item, index) => {
+          {mainItems.map((item, index) => {
             const Icon = item.icon
             return (
               <button
@@ -75,7 +84,7 @@ export function Sidebar() {
               alt="Profile"
               width={24}
               height={24}
-              className="rounded-full object-cover h-auto"
+              className="w-6 h-6 rounded-full object-cover aspect-square"
             />
             <span className="font-medium">{t('sidebar.profile')}</span>
           </button>
@@ -84,7 +93,7 @@ export function Sidebar() {
 
       {/* Bottom Menu - More and Also from Meta */}
       <div className="flex flex-col space-y-4 mt-4 mb-2">
-        {filterBottomItems().map((item, index) => {
+        {bottomItems.map((item, index) => {
           const Icon = item.icon
           return (
             <button
