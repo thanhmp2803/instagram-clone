@@ -2,9 +2,43 @@
 import Image from 'next/image'
 import { createSidebarItems } from '@mocks'
 import { useTranslation } from 'react-i18next'
+import { useMounted } from '@hooks'
 
 export function Sidebar() {
-  const { t } = useTranslation()
+  const mounted = useMounted()
+  const { t, ready } = useTranslation()
+
+  // If not mounted or i18n not ready, render skeleton
+  if (!mounted || !ready) {
+    return (
+      <div className="fixed left-0 top-0 h-screen w-[250px] bg-black text-white flex flex-col justify-between p-4 border-r border-e-zinc-700 z-10">
+        <div className="flex-1">
+          <h1 className="text-3xl font-instagram mt-5 mb-8 ms-2 cursor-pointer">Instagram</h1>
+          <nav className="flex flex-col space-y-4">
+            {Array(7)
+              .fill(0)
+              .map((_, i) => (
+                <div key={i} className="flex items-center space-x-4 p-2">
+                  <div className="w-6 h-6 bg-gray-700 rounded animate-pulse"></div>
+                  <div className="w-20 h-4 bg-gray-700 rounded animate-pulse"></div>
+                </div>
+              ))}
+          </nav>
+        </div>
+        <div className="flex flex-col space-y-4">
+          {Array(2)
+            .fill(0)
+            .map((_, i) => (
+              <div key={i} className="flex items-center space-x-4 p-2">
+                <div className="w-6 h-6 bg-gray-700 rounded animate-pulse"></div>
+                <div className="w-16 h-4 bg-gray-700 rounded animate-pulse"></div>
+              </div>
+            ))}
+        </div>
+      </div>
+    )
+  }
+
   const allItems = createSidebarItems(t)
 
   const filterMainItems = () =>
@@ -15,7 +49,7 @@ export function Sidebar() {
     allItems.filter((item) => [t('sidebar.more'), t('sidebar.also_from_meta')].includes(item.label))
 
   return (
-    <div className="h-screen w-[250px] bg-black text-white flex flex-col justify-between p-4 border-r border-e-zinc-700">
+    <div className="fixed left-0 top-0 h-screen w-[250px] bg-black text-white flex flex-col justify-between p-4 border-r border-e-zinc-700 z-10">
       {/* Logo and Main Menu */}
       <div className="flex-1">
         <h1 className="text-3xl font-instagram mt-5 mb-8 ms-2 cursor-pointer">Instagram</h1>
@@ -41,7 +75,7 @@ export function Sidebar() {
               alt="Profile"
               width={24}
               height={24}
-              className="rounded-full object-cover"
+              className="rounded-full object-cover h-auto"
             />
             <span className="font-medium">{t('sidebar.profile')}</span>
           </button>
