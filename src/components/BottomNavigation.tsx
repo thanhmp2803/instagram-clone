@@ -3,7 +3,8 @@ import { useState } from 'react'
 import { Home, Compass, Film, PlusSquare, MessageCircle } from 'lucide-react'
 import { useMounted } from '@hooks'
 import Image from 'next/image'
-import { CreatePost } from '@components'
+import { CreatePost, ProfileDropdown } from '@components'
+import { useRouter } from 'next/navigation'
 
 const createNavItems = [
   { icon: Home, label: 'Home' },
@@ -15,8 +16,10 @@ const createNavItems = [
 
 export function BottomNavigation() {
   const mounted = useMounted()
+  const router = useRouter()
   const [activeIndex, setActiveIndex] = useState(0)
   const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showProfileMenu, setShowProfileMenu] = useState(false)
 
   // Loading skeleton
   if (!mounted) {
@@ -39,7 +42,14 @@ export function BottomNavigation() {
     setActiveIndex(index)
     if (index === 3) {
       setShowCreateModal(true)
+    } else if (index === 0) {
+      router.push('/')
     }
+  }
+
+  const handleProfileClick = () => {
+    setActiveIndex(5)
+    setShowProfileMenu(!showProfileMenu)
   }
 
   const handleCloseModal = () => {
@@ -70,24 +80,36 @@ export function BottomNavigation() {
           })}
 
           {/* Profile Icon */}
-          <button
-            onClick={() => setActiveIndex(4)}
-            className="flex flex-col items-center hover:bg-gray-800 rounded-lg transition-colors min-w-[48px]"
-          >
-            <div
-              className={`rounded-full transition-all ${
-                activeIndex === 4 ? 'ring-2 ring-white p-0.5' : ''
-              }`}
+          <div className="relative">
+            <button
+              onClick={handleProfileClick}
+              className="flex flex-col items-center hover:bg-gray-800 rounded-lg transition-colors min-w-[48px]"
             >
-              <Image
-                src="/images/conmeo.jpg"
-                alt="Profile"
-                width={24}
-                height={24}
-                className="w-6 h-6 rounded-full object-cover aspect-square"
-              />
-            </div>
-          </button>
+              <div
+                className={`rounded-full transition-all ${
+                  activeIndex === 5 ? 'ring-2 ring-white p-0.5' : ''
+                }`}
+              >
+                <Image
+                  src="/images/conmeo.jpg"
+                  alt="Profile"
+                  width={24}
+                  height={24}
+                  className="w-6 h-6 rounded-full object-cover aspect-square"
+                />
+              </div>
+            </button>
+
+            <ProfileDropdown
+              isOpen={showProfileMenu}
+              onClose={() => {
+                setShowProfileMenu(false)
+                setActiveIndex(0)
+              }}
+              username="pthanh2803"
+              position="bottom"
+            />
+          </div>
         </div>
       </div>
 

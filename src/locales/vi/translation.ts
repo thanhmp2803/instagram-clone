@@ -54,6 +54,10 @@ const vi = {
     close: 'Đóng',
     caption_placeholder: 'Thêm chú thích...',
   },
+  profile: {
+    view_profile: 'Xem trang cá nhân',
+    logout: 'Đăng xuất',
+  },
 }
 
 export default vi

@@ -54,6 +54,10 @@ const en = {
     close: 'Close',
     caption_placeholder: 'Add caption...',
   },
+  profile: {
+    view_profile: 'View profile',
+    logout: 'Log out',
+  },
 }
 
 export default en

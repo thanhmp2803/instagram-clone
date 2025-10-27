@@ -4,12 +4,15 @@ import { createSidebarItems } from '@mocks'
 import { useTranslation } from 'react-i18next'
 import { useMounted } from '@hooks'
 import { useMemo, useState } from 'react'
-import { CreatePost } from './CreatePost'
+import { CreatePost, ProfileDropdown } from '@components'
+import { useRouter } from 'next/navigation'
 
 export function Sidebar() {
   const mounted = useMounted()
   const { t, ready } = useTranslation()
+  const router = useRouter()
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
 
   // Memoize sidebar items
   const allItems = useMemo(() => {
@@ -69,11 +72,18 @@ export function Sidebar() {
           {mainItems.map((item, index) => {
             const Icon = item.icon
             const isCreateButton = item.label === t('sidebar.create')
+            const isHomeButton = item.label === t('sidebar.home')
 
             return (
               <button
                 key={index}
-                onClick={isCreateButton ? () => setIsCreatePostOpen(true) : undefined}
+                onClick={() => {
+                  if (isCreateButton) {
+                    setIsCreatePostOpen(true)
+                  } else if (isHomeButton) {
+                    router.push('/')
+                  }
+                }}
                 className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer"
               >
                 <Icon size={24} />
@@ -83,16 +93,28 @@ export function Sidebar() {
           })}
 
           {/* Profile */}
-          <button className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer">
-            <Image
-              src="/images/conmeo.jpg"
-              alt="Profile"
-              width={24}
-              height={24}
-              className="w-6 h-6 rounded-full object-cover aspect-square"
+          <div className="relative">
+            <button
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer w-full"
+            >
+              <Image
+                src="/images/conmeo.jpg"
+                alt="Profile"
+                width={24}
+                height={24}
+                className="w-6 h-6 rounded-full object-cover aspect-square"
+              />
+              <span className="font-medium">{t('sidebar.profile')}</span>
+            </button>
+
+            <ProfileDropdown
+              isOpen={isProfileMenuOpen}
+              onClose={() => setIsProfileMenuOpen(false)}
+              username="pthanh2803"
+              position="sidebar"
             />
-            <span className="font-medium">{t('sidebar.profile')}</span>
-          </button>
+          </div>
         </nav>
       </div>
 
