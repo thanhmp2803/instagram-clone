@@ -43,7 +43,7 @@ function PostCardContent({ post }: Props) {
   }
 
   return (
-    <div className="bg-black text-white border border-gray-800 rounded-lg mb-6 w-[468px] mx-auto">
+    <div className="bg-black text-white border border-gray-800 rounded-lg w-[468px] mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between p-3">
         <div className="flex items-center">
