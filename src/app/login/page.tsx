@@ -1,5 +1,5 @@
 'use client'
-import { useAuth } from '@hooks'
+import { useAuth, useMounted } from '@hooks'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
@@ -13,6 +13,7 @@ const mockUsers = [
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 export default function LoginPage() {
+  const mounted = useMounted()
   const { t } = useTranslation()
   const { login } = useAuth()
   const router = useRouter()
@@ -40,10 +41,12 @@ export default function LoginPage() {
     }
   }
 
+  if (!mounted) return null
+
   return (
-    <div className="min-h-screen bg-black flex items-top justify-center p-4 mt-6">
+    <div className="min-h-screen bg-black flex items-start justify-center p-4 mt-27 md:mt-6">
       <div className="w-full max-w-88">
-        <div className="bg-black p-8 border border-neutral-800">
+        <div className="bg-black p-8 md:border md:border-neutral-800">
           <div className="text-center mb-8">
             <h1 className="text-5xl text-white mb-2 font-instagram">Instagram</h1>
           </div>
@@ -82,7 +85,7 @@ export default function LoginPage() {
           </div>
         </div>
 
-        <div className="mt-4 bg-black p-4 border border-neutral-800 text-center">
+        <div className="mt-4 bg-black p-4 md:border md:border-neutral-800 text-center">
           <p className="text-sm text-gray-400">
             {t('login.no_account')}{' '}
             <a href="#" className="text-blue-500 font-semibold">
