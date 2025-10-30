@@ -57,6 +57,15 @@ const en = {
   profile: {
     view_profile: 'View profile',
     logout: 'Log out',
+    edit_profile: 'Edit profile',
+    view_archive: 'View archive',
+    posts: 'posts',
+    followers: 'followers',
+    following: 'following',
+    new_story: 'New',
+    empty_posts: 'Share photos and videos so everyone can see',
+    empty_saved: 'Content you saved will be displayed here',
+    empty_tagged: 'When someone tags you, that post will be displayed here',
   },
 }
 

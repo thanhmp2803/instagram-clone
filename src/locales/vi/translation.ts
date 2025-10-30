@@ -57,6 +57,15 @@ const vi = {
   profile: {
     view_profile: 'Xem trang cá nhân',
     logout: 'Đăng xuất',
+    edit_profile: 'Chỉnh sửa trang cá nhân',
+    view_archive: 'Xem kho lưu trữ',
+    posts: 'bài viết',
+    followers: 'người theo dõi',
+    following: 'đang theo dõi',
+    new_story: 'Mới',
+    empty_posts: 'Chia sẻ ảnh và video để mọi người có thể nhìn thấy',
+    empty_saved: 'Nội dung bạn đã lưu sẽ hiển thị ở đây',
+    empty_tagged: 'Khi ai đó gắn thẻ bạn, bài viết đó sẽ hiển thị ở đây',
   },
 }
 

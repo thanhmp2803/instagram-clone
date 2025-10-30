@@ -1,10 +1,4 @@
-import type { Metadata } from 'next'
 import { Sidebar, BottomNavigation } from '@components'
-
-export const metadata: Metadata = {
-  title: 'Profile • Instagram',
-  description: 'Instagram profile page',
-}
 
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   return (
