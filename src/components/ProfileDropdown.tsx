@@ -3,6 +3,7 @@ import { User, LogOut } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@hooks'
 
 interface ProfileDropdownProps {
   isOpen: boolean
@@ -19,6 +20,7 @@ export function ProfileDropdown({
 }: ProfileDropdownProps) {
   const { t } = useTranslation()
   const router = useRouter()
+  const { logout } = useAuth()
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close dropdown when click outside
@@ -67,7 +69,8 @@ export function ProfileDropdown({
       {/* Logout Option */}
       <button
         onClick={() => {
-          // TODO: Implement logout
+          logout()
+          router.push('/login')
           onClose()
         }}
         className="w-full px-4 py-3 text-left hover:bg-neutral-700 transition-colors flex items-center space-x-3 cursor-pointer"

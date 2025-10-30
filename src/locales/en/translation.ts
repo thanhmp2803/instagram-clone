@@ -67,6 +67,17 @@ const en = {
     empty_saved: 'Content you saved will be displayed here',
     empty_tagged: 'When someone tags you, that post will be displayed here',
   },
+  login: {
+    redirect: 'Redirecting to login...',
+    email: 'Email',
+    password: 'Password',
+    login: 'Log in',
+    forgot_password: 'Forgot password?',
+    no_account: "Don't have an account?",
+    sign_up: 'Sign up',
+    error_invalid: 'Invalid email or password',
+    error_email_format: 'Please enter a valid email address',
+  },
 }
 
 export default en

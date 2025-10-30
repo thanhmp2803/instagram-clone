@@ -67,6 +67,17 @@ const vi = {
     empty_saved: 'Nội dung bạn đã lưu sẽ hiển thị ở đây',
     empty_tagged: 'Khi ai đó gắn thẻ bạn, bài viết đó sẽ hiển thị ở đây',
   },
+  login: {
+    redirect: 'Đang chuyển hướng đến trang đăng nhập...',
+    email: 'Email',
+    password: 'Mật khẩu',
+    login: 'Đăng nhập',
+    forgot_password: 'Quên mật khẩu?',
+    no_account: 'Bạn chưa có tài khoản?',
+    sign_up: 'Đăng ký',
+    error_invalid: 'Email hoặc mật khẩu không đúng',
+    error_email_format: 'Vui lòng nhập địa chỉ email hợp lệ',
+  },
 }
 
 export default vi

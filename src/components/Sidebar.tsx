@@ -2,7 +2,7 @@
 import Image from 'next/image'
 import { createSidebarItems } from '@mocks'
 import { useTranslation } from 'react-i18next'
-import { useMounted } from '@hooks'
+import { useMounted, useAuth } from '@hooks'
 import { useMemo, useState } from 'react'
 import { CreatePost, ProfileDropdown } from '@components'
 import { useRouter } from 'next/navigation'
@@ -11,6 +11,7 @@ export function Sidebar() {
   const mounted = useMounted()
   const { t, ready } = useTranslation()
   const router = useRouter()
+  const { user } = useAuth()
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
 
@@ -95,11 +96,17 @@ export function Sidebar() {
           {/* Profile */}
           <div className="relative">
             <button
-              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              onClick={() => {
+                if (!user) {
+                  router.push('/login')
+                } else {
+                  setIsProfileMenuOpen(!isProfileMenuOpen)
+                }
+              }}
               className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer w-full"
             >
               <Image
-                src="/images/conmeo.jpg"
+                src={user ? '/images/conmeo.jpg' : '/images/nonuser.png'}
                 alt="Profile"
                 width={24}
                 height={24}
@@ -108,12 +115,14 @@ export function Sidebar() {
               <span className="font-medium">{t('sidebar.profile')}</span>
             </button>
 
-            <ProfileDropdown
-              isOpen={isProfileMenuOpen}
-              onClose={() => setIsProfileMenuOpen(false)}
-              username="pthanh2803"
-              position="sidebar"
-            />
+            {user && (
+              <ProfileDropdown
+                isOpen={isProfileMenuOpen}
+                onClose={() => setIsProfileMenuOpen(false)}
+                username={user.name}
+                position="sidebar"
+              />
+            )}
           </div>
         </nav>
       </div>

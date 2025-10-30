@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { Home, Compass, Film, PlusSquare, MessageCircle } from 'lucide-react'
-import { useMounted } from '@hooks'
+import { useMounted, useAuth } from '@hooks'
 import Image from 'next/image'
 import { CreatePost, ProfileDropdown } from '@components'
 import { useRouter } from 'next/navigation'
@@ -17,6 +17,7 @@ const createNavItems = [
 export function BottomNavigation() {
   const mounted = useMounted()
   const router = useRouter()
+  const { user } = useAuth()
   const [activeIndex, setActiveIndex] = useState(0)
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showProfileMenu, setShowProfileMenu] = useState(false)
@@ -48,8 +49,12 @@ export function BottomNavigation() {
   }
 
   const handleProfileClick = () => {
-    setActiveIndex(5)
-    setShowProfileMenu(!showProfileMenu)
+    if (!user) {
+      router.push('/login')
+    } else {
+      setActiveIndex(5)
+      setShowProfileMenu(!showProfileMenu)
+    }
   }
 
   const handleCloseModal = () => {
@@ -91,7 +96,7 @@ export function BottomNavigation() {
                 }`}
               >
                 <Image
-                  src="/images/conmeo.jpg"
+                  src={user ? '/images/conmeo.jpg' : '/images/nonuser.png'}
                   alt="Profile"
                   width={24}
                   height={24}
@@ -100,15 +105,17 @@ export function BottomNavigation() {
               </div>
             </button>
 
-            <ProfileDropdown
-              isOpen={showProfileMenu}
-              onClose={() => {
-                setShowProfileMenu(false)
-                setActiveIndex(0)
-              }}
-              username="pthanh2803"
-              position="bottom"
-            />
+            {user && (
+              <ProfileDropdown
+                isOpen={showProfileMenu}
+                onClose={() => {
+                  setShowProfileMenu(false)
+                  setActiveIndex(0)
+                }}
+                username={user.name}
+                position="bottom"
+              />
+            )}
           </div>
         </div>
       </div>
