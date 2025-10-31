@@ -11,3 +11,16 @@ export interface IAuthContext {
   login: (user: IUser) => void
   logout: () => void
 }
+
+export interface FormField {
+  id: keyof FormState
+  type: 'email' | 'password' | 'text'
+  placeholder: string
+}
+
+export interface FormState {
+  email: string
+  password: string
+  fullName: string
+  username: string
+}

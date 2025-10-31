@@ -3,6 +3,7 @@ import { useAuth, useMounted } from '@hooks'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
+import Link from 'next/link'
 
 const mockUsers = [
   { id: '1', name: 'Mai Phước Thành', email: 'admin@gmail.com', password: 'Admin123@' },
@@ -31,7 +32,16 @@ export default function LoginPage() {
       return
     }
 
-    const foundUser = mockUsers.find((u) => u.email === email && u.password === password)
+    // Check mock users first
+    let foundUser = mockUsers.find((u) => u.email === email && u.password === password)
+
+    // If not found in mock users, check registered users in localStorage
+    if (!foundUser) {
+      const registeredUsers = JSON.parse(localStorage.getItem('users') || '[]')
+      foundUser = registeredUsers.find(
+        (u: { email: string; password: string }) => u.email === email && u.password === password,
+      )
+    }
 
     if (foundUser) {
       login(foundUser)
@@ -88,9 +98,9 @@ export default function LoginPage() {
         <div className="mt-4 bg-black p-4 md:border md:border-neutral-800 text-center">
           <p className="text-sm text-gray-400">
             {t('login.no_account')}{' '}
-            <a href="#" className="text-blue-500 font-semibold">
+            <Link href="/register" className="text-blue-500 font-semibold">
               {t('login.sign_up')}
-            </a>
+            </Link>
           </p>
         </div>
       </div>
