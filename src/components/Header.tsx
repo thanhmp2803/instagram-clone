@@ -4,12 +4,14 @@ import { Search, Heart } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { useMounted, useSearch, useDebounce } from '@hooks'
 import { useTranslation } from 'react-i18next'
+import { usePathname } from 'next/navigation'
 
 export const Header = () => {
   const [searchValue, setSearchValue] = useState('')
   const mounted = useMounted()
   const { setSearchTerm } = useSearch()
   const { t } = useTranslation()
+  const pathname = usePathname()
 
   // Debounce search value to avoid too many updates
   const debouncedSearchValue = useDebounce(searchValue, 300)
@@ -18,6 +20,11 @@ export const Header = () => {
   useEffect(() => {
     setSearchTerm(debouncedSearchValue)
   }, [debouncedSearchValue, setSearchTerm])
+
+  // Hide header on profile page
+  if (pathname === '/profile') {
+    return null
+  }
 
   // Skeleton Loader
   if (!mounted) {
