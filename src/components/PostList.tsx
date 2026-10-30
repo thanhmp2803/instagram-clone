@@ -2,6 +2,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { Loader } from 'lucide-react'
 import { PostCard } from './PostCard'
+import { StoriesTray } from './stories/StoriesTray'
 import { generatePostData } from '@mocks'
 import type { Post } from '@types'
 import { useTranslation } from 'react-i18next'
@@ -89,6 +90,9 @@ const PostListInner: React.FC<{
 
   return (
     <>
+      {/* Instagram Stories Carousel Tray (Visible when not actively searching) */}
+      {!searchTerm.trim() && <StoriesTray />}
+
       <div className="flex flex-col items-center w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto px-2 sm:px-4">
         {filteredPosts.length === 0 && searchTerm.trim() ? (
           <div className="text-center py-12 text-gray-400">
@@ -136,7 +140,7 @@ export const PostList: React.FC = () => {
   // Show skeleton loading while not ready
   if (!mounted || !ready || posts.length === 0) {
     return (
-      <div className="flex flex-col items-center w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto px-2 sm:px-4">
+      <div className="flex flex-col items-center w-full max-w-md sm:max-w-lg md:max-w-xl lg:max-w-2xl mx-auto px-2 sm:px-4 pt-4">
         {Array(3)
           .fill(0)
           .map((_, index) => (
