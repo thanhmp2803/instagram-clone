@@ -4,7 +4,7 @@ import { createSidebarItems } from '@mocks'
 import { useTranslation } from 'react-i18next'
 import { useMounted, useAuth } from '@hooks'
 import { useMemo, useState, useEffect } from 'react'
-import { CreatePost, ProfileDropdown, SearchDrawer, NotificationsDrawer } from '@components'
+import { CreatePost, MoreMenu, SearchDrawer, NotificationsDrawer } from '@components'
 import { useRouter, usePathname } from 'next/navigation'
 import { resolveAvatar } from '@/utils/avatar'
 
@@ -15,7 +15,7 @@ export function Sidebar() {
   const pathname = usePathname()
   const { user } = useAuth()
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
-  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false)
   const [unreadNotifs, setUnreadNotifs] = useState(0)
@@ -109,6 +109,7 @@ export function Sidebar() {
           <nav className="flex flex-col space-y-4">
             {mainItems.map((item, index) => {
               const Icon = item.icon
+
               const isCreateButton = item.label === t('sidebar.create')
               const isSearchButton = item.label === t('sidebar.search')
               const isNotificationsButton = item.label === t('sidebar.notifications')
@@ -164,14 +165,14 @@ export function Sidebar() {
               )
             })}
 
-            {/* Profile */}
+            {/* Profile -> Direct navigation to /profile */}
             <div className="relative">
               <button
                 onClick={() => {
                   if (!user) {
                     router.push('/login')
                   } else {
-                    setIsProfileMenuOpen(!isProfileMenuOpen)
+                    router.push('/profile')
                   }
                 }}
                 className={`flex items-center space-x-4 p-2 rounded-lg transition cursor-pointer w-full ${
@@ -193,27 +194,30 @@ export function Sidebar() {
                   {t('sidebar.profile')}
                 </span>
               </button>
-
-              {user && (
-                <ProfileDropdown
-                  isOpen={isProfileMenuOpen}
-                  onClose={() => setIsProfileMenuOpen(false)}
-                  username={user.name}
-                  position="sidebar"
-                />
-              )}
             </div>
           </nav>
         </div>
 
         {/* Bottom Menu - More and Also from Meta */}
-        <div className="flex flex-col space-y-4 mt-4 mb-2">
+        <div className="relative flex flex-col space-y-4 mt-4 mb-2">
+          {/* Instagram More Popup Menu */}
+          <MoreMenu isOpen={isMoreMenuOpen} onClose={() => setIsMoreMenuOpen(false)} />
           {bottomItems.map((item, index) => {
             const Icon = item.icon
+
             return (
               <button
                 key={index}
-                className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer text-zinc-300 hover:text-white"
+                onClick={() => {
+                  if (item.label === t('sidebar.more') || index === 0) {
+                    setIsMoreMenuOpen((prev) => !prev)
+                  }
+                }}
+                className={`flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer ${
+                  (item.label === t('sidebar.more') || index === 0) && isMoreMenuOpen
+                    ? 'bg-zinc-800 text-white font-bold'
+                    : 'text-zinc-300 hover:text-white'
+                }`}
               >
                 <Icon size={24} />
                 <span className="font-medium">{item.label}</span>

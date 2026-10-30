@@ -129,6 +129,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [supabase, isConfigured])
 
+  // Listen for global profile updates (from EditProfileModal)
+  useEffect(() => {
+    const handleProfileUpdate = (e: Event) => {
+      const customEvent = e as CustomEvent<{
+        username?: string
+        fullName?: string
+        avatar?: string
+      }>
+      if (customEvent.detail) {
+        setUser((prev) => {
+          if (!prev) return prev
+          const updated: IUser = {
+            ...prev,
+            username: customEvent.detail.username || prev.username,
+            name: customEvent.detail.fullName || prev.name,
+            avatar: customEvent.detail.avatar || prev.avatar,
+          }
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('user', JSON.stringify(updated))
+          }
+          return updated
+        })
+      }
+    }
+
+    window.addEventListener('instagram:profile_updated', handleProfileUpdate)
+    return () => window.removeEventListener('instagram:profile_updated', handleProfileUpdate)
+  }, [])
+
   // Login method supporting both Supabase credentials and mock user objects
   const login = useCallback(
     async (userOrEmail: IUser | string, password?: string) => {

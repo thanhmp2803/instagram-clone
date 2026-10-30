@@ -12,7 +12,7 @@ import {
   MoreHorizontal,
   CheckCircle,
 } from 'lucide-react'
-import { useAuth } from '@hooks'
+import { useAuth, useSave } from '@hooks'
 import { createClient, isSupabaseConfigured } from '@/utils/supabase/client'
 import { formatRelativeTime } from '@/utils/formatTime'
 import { resolveAvatar } from '@/utils/avatar'
@@ -51,6 +51,7 @@ const isValidUUID = (str?: string | null): boolean =>
 
 export function PostModal({ isOpen, onClose, post }: PostModalProps) {
   const { user } = useAuth()
+  const { saveButtonProps } = useSave(post?.id)
   const [commentText, setCommentText] = useState('')
   const [comments, setComments] = useState<PostCommentItem[]>([])
   const [isLiked, setIsLiked] = useState(false)
@@ -552,8 +553,8 @@ export function PostModal({ isOpen, onClose, post }: PostModalProps) {
                   <Send size={24} className="text-white" />
                 </button>
               </div>
-              <button className="hover:opacity-70 transition cursor-pointer" aria-label="Save post">
-                <Bookmark size={24} className="text-white" />
+              <button {...saveButtonProps} aria-label="Save post">
+                <Bookmark size={24} className="text-white" fill={saveButtonProps.fill} />
               </button>
             </div>
 

@@ -35,29 +35,33 @@ const isValidUUID = (str?: string | null): boolean =>
   Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str))
 
 export function deduplicateNotifications(items: NotificationItem[]): NotificationItem[] {
-  const seenIds = new Set<string>()
   const seenSignatures = new Set<string>()
   const result: NotificationItem[] = []
 
   for (const item of items) {
     if (!item) continue
-    if (item.id && seenIds.has(item.id)) continue
 
-    // Bucket timestamp into 5-minute intervals to collapse repeated identical triggers
-    const timeMs = item.createdAt ? new Date(item.createdAt).getTime() : 0
-    const timeBucket = !isNaN(timeMs) && timeMs > 0 ? Math.floor(timeMs / (5 * 60 * 1000)) : 0
+    const actor = (item.actorUsername || item.actorId || '').toLowerCase().trim()
+    const type = item.type
+    const postId = String(item.postId || '').trim()
+    const commentText = (item.commentText || '').toLowerCase().trim()
 
-    const signature = [
-      (item.actorUsername || item.actorId || '').toLowerCase().trim(),
-      item.type,
-      String(item.postId || ''),
-      (item.commentText || '').toLowerCase().trim(),
-      timeBucket,
-    ].join('::')
+    // Semantic deduplication:
+    // - 1 like per user per post
+    // - 1 follow per user
+    // - 1 comment notification per user + post + commentText
+    let signature = ''
+    if (type === 'like') {
+      signature = `${actor}::like::${postId}`
+    } else if (type === 'follow') {
+      signature = `${actor}::follow`
+    } else if (type === 'comment') {
+      signature = `${actor}::comment::${postId}::${commentText}`
+    } else {
+      signature = `${actor}::${type}::${postId}::${item.id || ''}`
+    }
 
     if (seenSignatures.has(signature)) continue
-
-    if (item.id) seenIds.add(item.id)
     seenSignatures.add(signature)
     result.push(item)
   }
@@ -333,6 +337,7 @@ export function NotificationsDrawer({ isOpen, onClose, onUnreadChange }: Notific
       } else {
         currentList.push({ follower: curId, following: targetUsername })
         localStorage.setItem(FOLLOWS_STORAGE_KEY, JSON.stringify(currentList))
+        window.dispatchEvent(new CustomEvent('instagram:follow_updated'))
       }
     }
 

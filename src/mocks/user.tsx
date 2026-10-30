@@ -7,8 +7,8 @@ export const USER_PROFILE_THANH: UserProfile = {
   avatar: '/images/conmeo.jpg',
   bio: "Hi, I'm Thanh, a Frontend Developer. Passionate about Next.js, React & UI/UX 💻",
   posts: 9,
-  followers: 340,
-  following: 120,
+  followers: 2,
+  following: 1,
   isVerified: false,
 }
 
@@ -20,8 +20,8 @@ export const USER_PROFILE_SARAH: UserProfile = {
     'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80',
   bio: 'Frontend Engineer & UI enthusiast 💻 Building modern web experiences ✨ SF, California',
   posts: 9,
-  followers: 1420,
-  following: 280,
+  followers: 1,
+  following: 1,
   isVerified: true,
 }
 
@@ -33,8 +33,8 @@ export const USER_PROFILE_ELENA: UserProfile = {
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80',
   bio: 'Sourdough baker & Culinary creator 🥖 Sourdough workshops & slow fermentation 🧈',
   posts: 9,
-  followers: 2890,
-  following: 412,
+  followers: 0,
+  following: 1,
   isVerified: false,
 }
 

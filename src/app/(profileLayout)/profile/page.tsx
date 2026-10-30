@@ -2,7 +2,7 @@
 import { Profile } from '@components'
 import { useAuth } from '@hooks'
 import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
+import { useEffect, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Loader } from 'lucide-react'
 
@@ -33,5 +33,15 @@ export default function ProfilePage() {
     )
   }
 
-  return <Profile />
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-black flex items-center justify-center">
+          <Loader className="w-6 h-6 animate-spin text-white" />
+        </div>
+      }
+    >
+      <Profile />
+    </Suspense>
+  )
 }

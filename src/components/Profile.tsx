@@ -6,16 +6,25 @@ import { createProfileTabs, createProfileTabContents, getUserProfileData } from 
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useMounted, useAuth, usePost } from '@hooks'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient, isSupabaseConfigured } from '@/utils/supabase/client'
 import { formatRelativeTime } from '@/utils/formatTime'
 import { resolveAvatar } from '@/utils/avatar'
 import type { UserProfile } from '@types'
 import { PostModal, type PostModalData } from './post/PostModal'
+import { EditProfileModal } from './profile/EditProfileModal'
+import { FollowListModal } from './profile/FollowListModal'
+import {
+  FOLLOWS_STORAGE_KEY,
+  getLocalFollowRecords,
+  saveLocalFollowRecords,
+  isUserFollowing,
+  getFollowersCount,
+  getFollowingCount,
+  FollowRecord,
+} from '@/utils/follows'
 
-const FOLLOWS_STORAGE_KEY = 'instagram_follows_store'
-
-interface FollowRecord {
+interface _OldFollowRecord {
   follower: string
   following: string
 }
@@ -43,6 +52,7 @@ export function Profile({ username }: ProfileProps) {
   const { user: authUser } = useAuth()
   const { posts: allContextPosts } = usePost()
   const router = useRouter()
+  const searchParams = useSearchParams()
 
   // Target username to display
   const targetUsername = useMemo(() => {
@@ -68,18 +78,45 @@ export function Profile({ username }: ProfileProps) {
 
   const [profileUser, setProfileUser] = useState<UserProfile>(baseData.profile)
   const [profilePosts, setProfilePosts] = useState<ProfileItem[]>(baseData.posts)
+  const [savedPosts, setSavedPosts] = useState<ProfileItem[]>([])
   const [isFollowing, setIsFollowing] = useState<boolean>(false)
   const [activeTab, setActiveTab] = useState<'posts' | 'saved' | 'tagged'>('posts')
   const [selectedPost, setSelectedPost] = useState<PostModalData | null>(null)
+
+  // Modals state
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false)
+  const [followModalConfig, setFollowModalConfig] = useState<{
+    isOpen: boolean
+    type: 'followers' | 'following'
+  }>({
+    isOpen: false,
+    type: 'followers',
+  })
+
+  // Handle URL query parameters (?tab=saved, ?edit=true) safely after all states and isOwnProfile are defined
+  useEffect(() => {
+    if (!searchParams) return
+    const tabParam = searchParams.get('tab')
+    if (tabParam === 'saved' || tabParam === 'posts' || tabParam === 'tagged') {
+      setActiveTab(tabParam)
+    }
+    const editParam = searchParams.get('edit')
+    if (editParam === 'true' && isOwnProfile) {
+      setIsEditProfileOpen(true)
+    }
+  }, [searchParams, isOwnProfile])
 
   // Check follow status and sync profile info from Supabase or LocalStorage
   const loadProfile = useCallback(async () => {
     let resolvedProfile: UserProfile = { ...baseData.profile }
     let resolvedPosts: ProfileItem[] = [...baseData.posts]
-    let resolvedFollowing = false
+    const curAuthUsername = (authUser?.username || authUser?.name || 'pthanh2803').toLowerCase()
+    let resolvedFollowing = isUserFollowing(curAuthUsername, targetUsername)
+    const dynamicFollowers = getFollowersCount(targetUsername)
+    const dynamicFollowing = getFollowingCount(targetUsername)
 
     // 1. Check local storage follow status
-    if (typeof window !== 'undefined' && authUser) {
+    if (false) {
       try {
         const rawFollows = localStorage.getItem(FOLLOWS_STORAGE_KEY)
         const follows: FollowRecord[] = rawFollows ? JSON.parse(rawFollows) : []
@@ -138,58 +175,44 @@ export function Profile({ username }: ProfileProps) {
             }
           }
 
-          const postIds = (dbPosts || []).map((p) => p.id)
-          const likesMap = new Map<string, number>()
-          const commentsMap = new Map<string, number>()
-          if (postIds.length > 0) {
-            const { data: likesData } = await supabase
-              .from('post_likes')
-              .select('post_id')
-              .in('post_id', postIds)
-            likesData?.forEach((l) => likesMap.set(l.post_id, (likesMap.get(l.post_id) || 0) + 1))
-
-            const { data: commentsData } = await supabase
-              .from('post_comments')
-              .select('post_id')
-              .in('post_id', postIds)
-            commentsData?.forEach((c) =>
-              commentsMap.set(c.post_id, (commentsMap.get(c.post_id) || 0) + 1),
-            )
-          }
-
-          const mappedPosts: ProfileItem[] = (dbPosts || []).map((p) => ({
-            id: p.id,
-            imageUrl: p.image_url,
-            type: 'post',
-            caption: p.caption || '',
-            likes: likesMap.get(p.id) ?? 0,
-            comments: commentsMap.get(p.id) ?? 0,
-            time: formatRelativeTime(p.created_at),
-          }))
-
-          const avatarUrl = resolveAvatar(profileRow.username, null, profileRow.avatar_url)
+          const resolvedAvatar = resolveAvatar(profileRow.username, null, profileRow.avatar_url)
 
           resolvedProfile = {
+            id: profileRow.id,
             username: profileRow.username,
-            fullName: profileRow.full_name,
-            avatar: avatarUrl,
-            bio: profileRow.bio || '',
-            posts: mappedPosts.length,
-            followers: followersCount || 0,
-            following: followingCount || 0,
-            isVerified: profileRow.is_verified || false,
+            fullName: profileRow.full_name || profileRow.username,
+            avatar: resolvedAvatar,
+            posts: dbPosts ? dbPosts.length : resolvedProfile.posts,
+            followers: followersCount !== null ? followersCount : resolvedProfile.followers,
+            following: followingCount !== null ? followingCount : resolvedProfile.following,
+            bio: profileRow.bio ?? resolvedProfile.bio,
+            isVerified: profileRow.is_verified ?? resolvedProfile.isVerified,
           }
 
-          resolvedPosts = mappedPosts
+          if (dbPosts && dbPosts.length > 0) {
+            resolvedPosts = dbPosts.map((p) => ({
+              id: p.id,
+              imageUrl: p.image_url,
+              type: 'post',
+              caption: p.caption || '',
+              likes: 0,
+              comments: 0,
+              time: formatRelativeTime(p.created_at),
+            }))
+          }
         }
       } catch (err) {
         console.error('Failed to load profile from Supabase:', err)
       }
     }
 
-    // 3. Merge any posts created via PostContext by this user
+    // Merge context posts for current logged-in user
     const contextUserPosts = allContextPosts
-      .filter((p) => p.username.toLowerCase() === targetUsername.toLowerCase())
+      .filter(
+        (p) =>
+          p.username.toLowerCase() === targetUsername.toLowerCase() ||
+          (p.userId && p.userId === resolvedProfile.id),
+      )
       .map((p) => ({
         id: p.id,
         imageUrl: p.image,
@@ -208,6 +231,12 @@ export function Profile({ username }: ProfileProps) {
       resolvedProfile.posts = resolvedPosts.length
     }
 
+    resolvedProfile.followers =
+      resolvedProfile.followers > 0 ? resolvedProfile.followers : dynamicFollowers
+    resolvedProfile.following =
+      resolvedProfile.following > 0 ? resolvedProfile.following : dynamicFollowing
+    resolvedProfile.posts = resolvedPosts.length
+
     setProfileUser(resolvedProfile)
     setProfilePosts(resolvedPosts)
     setIsFollowing(resolvedFollowing)
@@ -215,6 +244,149 @@ export function Profile({ username }: ProfileProps) {
 
   useEffect(() => {
     loadProfile()
+  }, [loadProfile])
+
+  // Load Saved/Bookmarked posts for own profile
+  const loadSavedPosts = useCallback(async () => {
+    if (!isOwnProfile || !authUser) return
+
+    const userKey = authUser.username || authUser.id || 'anon'
+    const storageKey = `instagram_bookmarks_${userKey}`
+    let savedIds: string[] = []
+
+    // 1. Load from localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const raw = localStorage.getItem(storageKey)
+        if (raw) savedIds = JSON.parse(raw).map(String)
+      } catch {}
+    }
+
+    // 2. Load from Supabase
+    if (isSupabaseConfigured() && authUser.id && isValidUUID(authUser.id)) {
+      try {
+        const supabase = createClient()
+        const { data: bRows } = await supabase
+          .from('bookmarks')
+          .select('post_id')
+          .eq('user_id', authUser.id)
+
+        if (bRows && bRows.length > 0) {
+          const dbIds = bRows.map((r) => String(r.post_id))
+          savedIds = Array.from(new Set([...savedIds, ...dbIds]))
+        }
+      } catch (err) {
+        console.warn('Error loading bookmarks from Supabase:', err)
+      }
+    }
+
+    if (savedIds.length === 0) {
+      setSavedPosts([])
+      return
+    }
+
+    // 3. Find matching posts from context posts
+    const foundMap = new Map<string, ProfileItem>()
+
+    allContextPosts.forEach((p) => {
+      if (savedIds.includes(String(p.id))) {
+        foundMap.set(String(p.id), {
+          id: p.id,
+          imageUrl: p.image,
+          type: 'post',
+          caption: p.caption,
+          likes: p.likes,
+          comments: p.comments,
+          time: p.time,
+        })
+      }
+    })
+
+    // Fetch any missing posts from Supabase
+    if (isSupabaseConfigured()) {
+      const missingIds = savedIds.filter((id) => !foundMap.has(id) && isValidUUID(id))
+      if (missingIds.length > 0) {
+        try {
+          const supabase = createClient()
+          const { data: dbPosts } = await supabase
+            .from('posts')
+            .select('id, image_url, caption, created_at')
+            .in('id', missingIds)
+
+          dbPosts?.forEach((p) => {
+            foundMap.set(String(p.id), {
+              id: p.id,
+              imageUrl: p.image_url,
+              type: 'post',
+              caption: p.caption || '',
+              likes: 0,
+              comments: 0,
+              time: formatRelativeTime(p.created_at),
+            })
+          })
+        } catch {}
+      }
+    }
+
+    setSavedPosts(Array.from(foundMap.values()))
+  }, [isOwnProfile, authUser, allContextPosts])
+
+  useEffect(() => {
+    if (activeTab === 'saved') {
+      loadSavedPosts()
+    }
+  }, [activeTab, loadSavedPosts])
+
+  // Listen for bookmark updates
+  useEffect(() => {
+    const handleBookmarkChange = () => {
+      if (activeTab === 'saved') {
+        loadSavedPosts()
+      }
+    }
+    window.addEventListener('instagram:bookmarks_updated', handleBookmarkChange)
+    return () => window.removeEventListener('instagram:bookmarks_updated', handleBookmarkChange)
+  }, [activeTab, loadSavedPosts])
+
+  // Listen for profile updates from EditProfileModal
+  useEffect(() => {
+    const handleProfileUpdated = (e: Event) => {
+      const customEvent = e as CustomEvent<UserProfile>
+      if (customEvent.detail) {
+        setProfileUser((prev) => ({
+          ...prev,
+          ...customEvent.detail,
+        }))
+      }
+    }
+    window.addEventListener('instagram:profile_updated', handleProfileUpdated)
+    return () => window.removeEventListener('instagram:profile_updated', handleProfileUpdated)
+  }, [])
+
+  // Listen for deleted posts
+  useEffect(() => {
+    const handlePostDeleted = (e: Event) => {
+      const customEvent = e as CustomEvent<{ postId: string }>
+      const delId = customEvent.detail?.postId
+      if (!delId) return
+      setProfilePosts((prev) => prev.filter((p) => String(p.id) !== delId))
+      setSavedPosts((prev) => prev.filter((p) => String(p.id) !== delId))
+      setProfileUser((prev) => ({
+        ...prev,
+        posts: Math.max(0, prev.posts - 1),
+      }))
+    }
+    window.addEventListener('instagram:post_deleted', handlePostDeleted)
+    return () => window.removeEventListener('instagram:post_deleted', handlePostDeleted)
+  }, [])
+
+  // Listen for follow updates
+  useEffect(() => {
+    const handleFollowChange = () => {
+      loadProfile()
+    }
+    window.addEventListener('instagram:follow_updated', handleFollowChange)
+    return () => window.removeEventListener('instagram:follow_updated', handleFollowChange)
   }, [loadProfile])
 
   // Toggle Follow / Unfollow
@@ -234,8 +406,7 @@ export function Profile({ username }: ProfileProps) {
     // Save to local storage
     if (typeof window !== 'undefined') {
       try {
-        const raw = localStorage.getItem(FOLLOWS_STORAGE_KEY)
-        let follows: FollowRecord[] = raw ? JSON.parse(raw) : []
+        let follows = getLocalFollowRecords()
         const currentId = authUser.username || authUser.id
 
         if (nextState) {
@@ -265,27 +436,27 @@ export function Profile({ username }: ProfileProps) {
               ),
           )
         }
-        localStorage.setItem(FOLLOWS_STORAGE_KEY, JSON.stringify(follows))
+        saveLocalFollowRecords(follows)
       } catch {}
     }
 
-    // Sync to Supabase if configured
-    if (isSupabaseConfigured() && isValidUUID(authUser.id)) {
+    // Sync to Supabase
+    if (isSupabaseConfigured() && authUser.id && isValidUUID(authUser.id)) {
       try {
         const supabase = createClient()
         const { data: targetData } = await supabase
           .from('profiles')
           .select('id')
-          .or(`username.eq.${targetUsername},id.eq.${targetUsername}`)
+          .eq('username', targetUsername)
           .maybeSingle()
 
         if (targetData && isValidUUID(targetData.id)) {
           if (nextState) {
-            await supabase
-              .from('follows')
-              .insert({ follower_id: authUser.id, following_id: targetData.id })
+            await supabase.from('follows').insert({
+              follower_id: authUser.id,
+              following_id: targetData.id,
+            })
 
-            // Create notification row in Supabase
             await supabase.from('notifications').insert({
               recipient_id: targetData.id,
               actor_id: authUser.id,
@@ -318,7 +489,7 @@ export function Profile({ username }: ProfileProps) {
       case 'posts':
         return profilePosts
       case 'saved':
-        return isOwnProfile ? baseData.reels : []
+        return isOwnProfile ? savedPosts : []
       case 'tagged':
         return baseData.tagged
       default:
@@ -331,7 +502,7 @@ export function Profile({ username }: ProfileProps) {
       case 'posts':
         return 'h-[189.78px] lg:h-[309px]'
       case 'saved':
-        return 'h-[221.56px] lg:h-[309px]'
+        return 'h-[189.78px] lg:h-[309px]'
       case 'tagged':
         return 'h-[189.78px] lg:h-[309px]'
       default:
@@ -366,19 +537,16 @@ export function Profile({ username }: ProfileProps) {
           <div
             key={item.id}
             onClick={() => {
-              if (activeTab === 'posts') {
-                setSelectedPost({
-                  id: item.id,
-                  imageUrl: item.imageUrl,
-                  caption: item.caption || '',
-                  username: profileUser.username,
-                  avatar: profileUser.avatar,
-                  likes: item.likes ?? 0,
-                  comments: item.comments ?? 0,
-                  time: item.time || 'Recently',
-                  isVerified: profileUser.isVerified,
-                })
-              }
+              setSelectedPost({
+                id: item.id,
+                imageUrl: item.imageUrl,
+                caption: item.caption || '',
+                username: profileUser.username,
+                avatar: profileUser.avatar,
+                likes: item.likes ?? 0,
+                comments: item.comments ?? 0,
+                time: item.time,
+              })
             }}
             className={`relative w-full ${heightClass} bg-gray-800 cursor-pointer hover:opacity-90 transition-opacity overflow-hidden group`}
           >
@@ -435,7 +603,15 @@ export function Profile({ username }: ProfileProps) {
         <div className="flex gap-4 mb-6 lg:gap-24 lg:mb-11">
           {/* Left: Avatar */}
           <div className="relative flex-shrink-0">
-            <div className="w-20 h-20 lg:w-40 lg:h-40 rounded-full bg-gradient-to-tr from-gray-700 to-gray-800 flex items-center justify-center cursor-pointer overflow-hidden border border-zinc-800">
+            <div
+              onClick={() => {
+                if (isOwnProfile) setIsEditProfileOpen(true)
+              }}
+              className={`w-20 h-20 lg:w-40 lg:h-40 rounded-full bg-gradient-to-tr from-gray-700 to-gray-800 flex items-center justify-center overflow-hidden border border-zinc-800 ${
+                isOwnProfile ? 'cursor-pointer hover:opacity-90' : ''
+              }`}
+              title={isOwnProfile ? 'Chỉnh sửa ảnh đại diện' : undefined}
+            >
               <Image
                 src={profileUser.avatar}
                 alt={profileUser.username}
@@ -461,7 +637,10 @@ export function Profile({ username }: ProfileProps) {
               <div className="flex gap-2 lg:flex-1">
                 {isOwnProfile ? (
                   <>
-                    <button className="bg-neutral-800 hover:bg-neutral-700 text-white font-semibold py-1.5 px-6 rounded-lg text-sm transition cursor-pointer">
+                    <button
+                      onClick={() => setIsEditProfileOpen(true)}
+                      className="bg-neutral-800 hover:bg-neutral-700 text-white font-semibold py-1.5 px-6 rounded-lg text-sm transition cursor-pointer"
+                    >
                       {t('profile.edit_profile')}
                     </button>
                     <button className="bg-neutral-800 hover:bg-neutral-700 text-white font-semibold py-1.5 px-6 rounded-lg text-sm transition cursor-pointer">
@@ -495,16 +674,24 @@ export function Profile({ username }: ProfileProps) {
             </div>
 
             {/* Desktop: Stats */}
-            <div className="hidden lg:flex lg:gap-10 lg:mb-5">
+            <div className="hidden lg:flex lg:gap-10 lg:mb-5 select-none">
               <div>
                 <span className="font-semibold">{profileUser.posts}</span>
                 <span className="text-gray-400 ml-1">{t('profile.posts')}</span>
               </div>
-              <div>
+              <div
+                onClick={() => setFollowModalConfig({ isOpen: true, type: 'followers' })}
+                className="cursor-pointer hover:opacity-80 transition"
+                title="Xem danh sách người theo dõi"
+              >
                 <span className="font-semibold">{profileUser.followers}</span>
                 <span className="text-gray-400 ml-1">{t('profile.followers')}</span>
               </div>
-              <div>
+              <div
+                onClick={() => setFollowModalConfig({ isOpen: true, type: 'following' })}
+                className="cursor-pointer hover:opacity-80 transition"
+                title="Xem danh sách đang theo dõi"
+              >
                 <span className="font-semibold">{profileUser.following}</span>
                 <span className="text-gray-400 ml-1">{t('profile.following')}</span>
               </div>
@@ -521,16 +708,22 @@ export function Profile({ username }: ProfileProps) {
         </div>
 
         {/* Mobile: Stats */}
-        <div className="flex justify-around py-3 border-t border-gray-800 lg:hidden text-center">
+        <div className="flex justify-around py-3 border-t border-gray-800 lg:hidden text-center select-none">
           <div>
             <div className="font-semibold">{profileUser.posts}</div>
             <div className="text-xs text-gray-400">{t('profile.posts')}</div>
           </div>
-          <div>
+          <div
+            onClick={() => setFollowModalConfig({ isOpen: true, type: 'followers' })}
+            className="cursor-pointer hover:opacity-80 transition"
+          >
             <div className="font-semibold">{profileUser.followers}</div>
             <div className="text-xs text-gray-400">{t('profile.followers')}</div>
           </div>
-          <div>
+          <div
+            onClick={() => setFollowModalConfig({ isOpen: true, type: 'following' })}
+            className="cursor-pointer hover:opacity-80 transition"
+          >
             <div className="font-semibold">{profileUser.following}</div>
             <div className="text-xs text-gray-400">{t('profile.following')}</div>
           </div>
@@ -558,7 +751,7 @@ export function Profile({ username }: ProfileProps) {
           })}
         </div>
 
-        {/* Posts/Reels/Tagged Grid */}
+        {/* Posts/Reels/Tagged/Saved Grid */}
         {renderGrid()}
       </div>
 
@@ -567,6 +760,23 @@ export function Profile({ username }: ProfileProps) {
         isOpen={!!selectedPost}
         onClose={() => setSelectedPost(null)}
         post={selectedPost}
+      />
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={isEditProfileOpen}
+        onClose={() => setIsEditProfileOpen(false)}
+        profile={profileUser}
+        onProfileUpdated={(updated) => setProfileUser(updated)}
+      />
+
+      {/* Followers / Following List Modal */}
+      <FollowListModal
+        isOpen={followModalConfig.isOpen}
+        onClose={() => setFollowModalConfig((prev) => ({ ...prev, isOpen: false }))}
+        type={followModalConfig.type}
+        profileId={profileUser.id}
+        profileUsername={profileUser.username}
       />
     </div>
   )

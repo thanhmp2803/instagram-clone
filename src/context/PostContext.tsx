@@ -8,6 +8,9 @@ import { resolveAvatar } from '@/utils/avatar'
 
 const STORAGE_POSTS_KEY = 'instagram_posts'
 
+const isValidUUID = (str?: string | null): boolean =>
+  Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str))
+
 interface AddPostInput {
   id?: number | string
   userId?: string
@@ -25,6 +28,7 @@ interface PostContextType {
   posts: Post[]
   loading: boolean
   addPost: (newPost: AddPostInput) => void
+  deletePost: (postId: string | number) => Promise<boolean>
   fetchPosts: () => Promise<void>
 }
 
@@ -205,9 +209,48 @@ export function PostProvider({ children }: PostProviderProps) {
     [t],
   )
 
+  const deletePost = useCallback(async (postId: string | number): Promise<boolean> => {
+    const idStr = String(postId)
+
+    // 1. Remove from state & local storage
+    setPosts((prev) => {
+      const updated = prev.filter((p) => String(p.id) !== idStr)
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem(STORAGE_POSTS_KEY, JSON.stringify(updated))
+        } catch {}
+      }
+      return updated
+    })
+
+    // 2. Remove from Supabase if configured & valid UUID
+    if (isSupabaseConfigured() && isValidUUID(idStr)) {
+      try {
+        const supabase = createClient()
+        // Clean up references in parallel
+        await Promise.allSettled([
+          supabase.from('post_comments').delete().eq('post_id', idStr),
+          supabase.from('post_likes').delete().eq('post_id', idStr),
+          supabase.from('bookmarks').delete().eq('post_id', idStr),
+          supabase.from('notifications').delete().eq('post_id', idStr),
+          supabase.from('posts').delete().eq('id', idStr),
+        ])
+      } catch (err) {
+        console.error('Failed to delete post from Supabase:', err)
+      }
+    }
+
+    // 3. Dispatch event so other components (e.g. Profile) update their post lists and counts
+    if (typeof window !== 'undefined') {
+      window.dispatchEvent(new CustomEvent('instagram:post_deleted', { detail: { postId: idStr } }))
+    }
+
+    return true
+  }, [])
+
   const value = useMemo(
-    () => ({ posts, loading, addPost, fetchPosts }),
-    [posts, loading, addPost, fetchPosts],
+    () => ({ posts, loading, addPost, deletePost, fetchPosts }),
+    [posts, loading, addPost, deletePost, fetchPosts],
   )
 
   return <PostContext.Provider value={value}>{children}</PostContext.Provider>

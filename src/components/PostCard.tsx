@@ -2,9 +2,8 @@
 
 import Image from 'next/image'
 import { Heart, MessageCircle, Send, MoreHorizontal, Bookmark, Smile } from 'lucide-react'
-import { useLike, useSave, useAuth } from '@hooks'
-import { createMoreMenuItems } from '@mocks'
-import { useState, useCallback } from 'react'
+import { useLike, useSave, useAuth, usePost } from '@hooks'
+import { useState, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
@@ -25,6 +24,7 @@ function PostCardContent({ post }: Props) {
   const { t } = useTranslation()
   const router = useRouter()
   const { user } = useAuth()
+  const { deletePost } = usePost()
 
   const { likesCount, likeButtonProps } = useLike({
     postId: post.id,
@@ -32,7 +32,7 @@ function PostCardContent({ post }: Props) {
     authorUsername: post.username,
     authorId: post.userId,
   })
-  const { saveButtonProps } = useSave()
+  const { saveButtonProps } = useSave(post.id)
 
   const [comment, setComment] = useState('')
   const [commentsCount, setCommentsCount] = useState(post.comments)
@@ -40,7 +40,38 @@ function PostCardContent({ post }: Props) {
   const [isModalOpen, setIsModalOpen] = useState(false)
 
   const iconClassName = 'cursor-pointer hover:text-gray-400 transition-colors'
-  const moreMenuItems = createMoreMenuItems(t)
+
+  const isOwnPost = useMemo(() => {
+    if (!user) return false
+    if (user.id && post.userId && user.id === post.userId) return true
+    if (
+      user.username &&
+      post.username &&
+      user.username.toLowerCase() === post.username.toLowerCase()
+    ) {
+      return true
+    }
+    return false
+  }, [user, post.userId, post.username])
+
+  const handleDeletePost = useCallback(async () => {
+    if (
+      window.confirm(
+        'Bạn có chắc chắn muốn xóa bài viết này không? Hành động này không thể hoàn tác.',
+      )
+    ) {
+      setShowMoreMenu(false)
+      await deletePost(post.id)
+    }
+  }, [deletePost, post.id])
+
+  const handleCopyLink = useCallback(() => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard?.writeText(`${window.location.origin}/?post=${post.id}`)
+      setShowMoreMenu(false)
+      alert('Đã sao chép liên kết vào bộ nhớ tạm!')
+    }
+  }, [post.id])
 
   const handleCommentSubmit = useCallback(async () => {
     const trimmed = comment.trim()
@@ -196,7 +227,7 @@ function PostCardContent({ post }: Props) {
             </div>
           </div>
           <button
-            className="p-1 rounded-full cursor-pointer"
+            className="p-1 rounded-full cursor-pointer hover:text-gray-400 transition"
             onClick={handleMoreClick}
             aria-label="More options"
           >
@@ -207,26 +238,33 @@ function PostCardContent({ post }: Props) {
         {/* More Menu Modal */}
         {showMoreMenu && (
           <div
-            className="fixed inset-0 bg-black/30 backdrop-blur-[2px] flex items-center justify-center z-50"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-150"
             onClick={handleCloseMenu}
           >
             <div
-              className="bg-neutral-800 rounded-lg w-80 max-w-sm"
+              className="bg-neutral-800 rounded-2xl w-80 max-w-sm overflow-hidden divide-y divide-neutral-700 shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             >
-              {moreMenuItems.map((item, index) => (
-                <div key={index}>
-                  <button
-                    className={`w-full px-4 py-3 text-center ${item.color} cursor-pointer text-sm font-normal border-none bg-transparent`}
-                    onClick={item.text === 'Cancel' ? handleCloseMenu : undefined}
-                  >
-                    {item.text}
-                  </button>
-                  {index < moreMenuItems.length - 1 && (
-                    <div className="border-b border-neutral-600"></div>
-                  )}
-                </div>
-              ))}
+              {isOwnPost && (
+                <button
+                  className="w-full px-4 py-3.5 text-center text-red-500 font-semibold cursor-pointer text-sm hover:bg-neutral-750 transition"
+                  onClick={handleDeletePost}
+                >
+                  Xóa bài viết
+                </button>
+              )}
+              <button
+                className="w-full px-4 py-3.5 text-center text-white cursor-pointer text-sm hover:bg-neutral-750 transition"
+                onClick={handleCopyLink}
+              >
+                Sao chép liên kết
+              </button>
+              <button
+                className="w-full px-4 py-3.5 text-center text-zinc-400 cursor-pointer text-sm hover:bg-neutral-750 transition"
+                onClick={handleCloseMenu}
+              >
+                Hủy
+              </button>
             </div>
           </div>
         )}
