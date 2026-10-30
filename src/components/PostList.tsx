@@ -129,7 +129,8 @@ export const PostList: React.FC = () => {
   const posts = useMemo(() => {
     const mockPosts = mounted && ready ? generatePostData(t) : []
     // User posts first, then mock data
-    return [...userPosts, ...mockPosts]
+    if (userPosts.length > 0) return userPosts
+    return mockPosts
   }, [mounted, ready, t, userPosts])
 
   // Show skeleton loading while not ready

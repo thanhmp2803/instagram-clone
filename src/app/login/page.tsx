@@ -61,7 +61,7 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export default function LoginPage() {
   const mounted = useMounted()
   const { t } = useTranslation()
-  const { login } = useAuth()
+  const { login, signUp } = useAuth()
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -90,9 +90,18 @@ export default function LoginPage() {
         }
 
         // If Supabase auth failed (e.g. demo account not yet seeded in Supabase auth),
-        // fallback to matching mock account
+        // try auto-creating and signing into Supabase Auth
         const foundMock = mockUsers.find((u) => u.email === email && u.password === password)
         if (foundMock) {
+          try {
+            await signUp(foundMock.email, foundMock.password, foundMock.name, foundMock.username)
+            const secondResult = await login(foundMock.email, foundMock.password)
+            if (!secondResult?.error) {
+              router.push('/')
+              return
+            }
+          } catch {}
+
           await login(foundMock)
           router.push('/')
           return
@@ -112,9 +121,7 @@ export default function LoginPage() {
         const registeredUsers: (IUser & { password?: string })[] = JSON.parse(
           localStorage.getItem('users') || '[]',
         )
-        foundUser = registeredUsers.find(
-          (u) => u.email === email && u.password === password,
-        )
+        foundUser = registeredUsers.find((u) => u.email === email && u.password === password)
       }
 
       if (foundUser) {

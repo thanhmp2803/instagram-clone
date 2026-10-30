@@ -52,19 +52,19 @@ export const mockUserPosts = [
   {
     id: 2,
     imageUrl:
-      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 3,
     imageUrl:
-      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 4,
     imageUrl:
-      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
@@ -76,124 +76,88 @@ export const mockUserPosts = [
   {
     id: 6,
     imageUrl:
-      'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 7,
     imageUrl:
-      'https://images.unsplash.com/photo-1537432376769-00f5c2f4c8d2?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 8,
     imageUrl:
-      'https://images.unsplash.com/photo-1517694712202-14dd9538aa97?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 9,
     imageUrl:
-      'https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
 ]
 
-export const mockUserReels = [
-  {
-    id: 1,
-    imageUrl:
-      'https://images.unsplash.com/photo-1518791841217-8f162f1e1131?w=600&auto=format&fit=crop&q=80',
-    type: 'reel',
-  },
-  {
-    id: 2,
-    imageUrl:
-      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80',
-    type: 'reel',
-  },
-  {
-    id: 3,
-    imageUrl:
-      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&auto=format&fit=crop&q=80',
-    type: 'reel',
-  },
-]
-
-// Posts for Sarah Connor (UI/UX Design, Coffee, Workspace, Lifestyle)
+// Posts for Sarah Connor (Creative Coding, Design, Workspace)
 export const userPostsSarah = [
   {
     id: 101,
     imageUrl:
-      'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 102,
     imageUrl:
-      'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1522542550221-31fd19575a2d?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 103,
     imageUrl:
-      'https://images.unsplash.com/photo-1542744094-3a31f272c490?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 104,
     imageUrl:
-      'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1534972195531-a756b1126f24?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 105,
     imageUrl:
-      'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1512486130939-2c4f79935e4f?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 106,
     imageUrl:
-      'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 107,
     imageUrl:
-      'https://images.unsplash.com/photo-1551836022-d5d88e9218df?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 108,
     imageUrl:
-      'https://images.unsplash.com/photo-1515378791036-0648a3ef77b2?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 109,
     imageUrl:
-      'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
 ]
 
-export const userReelsSarah = [
-  {
-    id: 101,
-    imageUrl:
-      'https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?w=600&auto=format&fit=crop&q=80',
-    type: 'reel',
-  },
-  {
-    id: 102,
-    imageUrl:
-      'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600&auto=format&fit=crop&q=80',
-    type: 'reel',
-  },
-]
-
-// Posts for Elena Rostova (Sourdough, Artisan Bakery, Pastry)
+// Posts for Elena Rostova (Baking, Sourdough, Artisan Pastries)
 export const userPostsElena = [
   {
     id: 201,
@@ -204,7 +168,7 @@ export const userPostsElena = [
   {
     id: 202,
     imageUrl:
-      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
@@ -216,38 +180,74 @@ export const userPostsElena = [
   {
     id: 204,
     imageUrl:
-      'https://images.unsplash.com/photo-1586444248902-2f64eddc13df?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 205,
     imageUrl:
-      'https://images.unsplash.com/photo-1517433670267-08bbd4be890f?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 206,
     imageUrl:
-      'https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1586985289688-ca3cf47d3e6e?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 207,
     imageUrl:
-      'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 208,
     imageUrl:
-      'https://images.unsplash.com/photo-1579697096985-41fe1430e5df?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1568254183919-78a4f43a2877?w=600&auto=format&fit=crop&q=80',
     type: 'post',
   },
   {
     id: 209,
     imageUrl:
-      'https://images.unsplash.com/photo-1511018556340-d16986a1c194?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=600&auto=format&fit=crop&q=80',
     type: 'post',
+  },
+]
+
+export const mockUserReels = [
+  {
+    id: 1,
+    imageUrl:
+      'https://images.unsplash.com/photo-1518770660439-4636190af475?w=600&auto=format&fit=crop&q=80',
+    type: 'reel',
+  },
+  {
+    id: 2,
+    imageUrl:
+      'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=600&auto=format&fit=crop&q=80',
+    type: 'reel',
+  },
+  {
+    id: 3,
+    imageUrl:
+      'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=600&auto=format&fit=crop&q=80',
+    type: 'reel',
+  },
+]
+
+export const userReelsSarah = [
+  {
+    id: 101,
+    imageUrl:
+      'https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?w=600&auto=format&fit=crop&q=80',
+    type: 'reel',
+  },
+  {
+    id: 102,
+    imageUrl:
+      'https://images.unsplash.com/photo-1522542550221-31fd19575a2d?w=600&auto=format&fit=crop&q=80',
+    type: 'reel',
   },
 ]
 
@@ -261,7 +261,7 @@ export const userReelsElena = [
   {
     id: 202,
     imageUrl:
-      'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1589367920969-ab8e050bbb04?w=600&auto=format&fit=crop&q=80',
     type: 'reel',
   },
 ]
@@ -270,27 +270,31 @@ export const mockUserTagged = [
   {
     id: 1,
     imageUrl:
-      'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=600&auto=format&fit=crop&q=80',
+      'https://images.unsplash.com/photo-1531482615713-2afd69097998?w=600&auto=format&fit=crop&q=80',
     type: 'tagged',
   },
   {
     id: 2,
-    imageUrl:
-      'https://images.unsplash.com/photo-1519389950473-47ba0277781c?w=600&auto=format&fit=crop&q=80',
-    type: 'tagged',
-  },
-  {
-    id: 3,
     imageUrl:
       'https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=600&auto=format&fit=crop&q=80',
     type: 'tagged',
   },
 ]
 
+interface LocalStoredUser {
+  id?: string
+  username?: string
+  name?: string
+  email?: string
+  avatar?: string
+  bio?: string
+}
+
 // Helper function to resolve dynamic profile and post data by account
 export function getUserProfileData(userIdOrUsername?: string | null) {
   const idLower = (userIdOrUsername || '').toLowerCase()
 
+  // 1. Sarah Connor (@creative_coder)
   if (
     idLower.includes('sarah') ||
     idLower.includes('creative_coder') ||
@@ -304,6 +308,7 @@ export function getUserProfileData(userIdOrUsername?: string | null) {
     }
   }
 
+  // 2. Elena Rostova (@chef_artisan)
   if (
     idLower.includes('elena') ||
     idLower.includes('chef_artisan') ||
@@ -317,11 +322,76 @@ export function getUserProfileData(userIdOrUsername?: string | null) {
     }
   }
 
-  // Default: Mai Phước Thành (@pthanh2803)
+  // 3. Mai Phước Thành (@pthanh2803) - Only if strictly matched
+  if (
+    idLower.includes('pthanh2803') ||
+    idLower.includes('phước thành') ||
+    idLower === 'a0000000-0000-0000-0000-000000000005' ||
+    idLower === 'admin@gmail.com'
+  ) {
+    return {
+      profile: USER_PROFILE_THANH,
+      posts: mockUserPosts,
+      reels: mockUserReels,
+      tagged: mockUserTagged,
+    }
+  }
+
+  // 4. Any newly registered or other account: dynamically build their profile
+  let customName = userIdOrUsername || 'Instagram User'
+  let customUsername = userIdOrUsername || 'user'
+  let customAvatar = '/images/nonuser.png'
+  let customBio = ''
+
+  if (typeof window !== 'undefined') {
+    try {
+      // Check current session user
+      const storedUser = localStorage.getItem('user')
+      if (storedUser) {
+        const u = JSON.parse(storedUser) as LocalStoredUser
+        if (
+          u.username === userIdOrUsername ||
+          u.id === userIdOrUsername ||
+          u.email === userIdOrUsername ||
+          !userIdOrUsername
+        ) {
+          customName = u.name || customName
+          customUsername = u.username || customUsername
+          customAvatar = u.avatar || customAvatar
+          customBio = u.bio || customBio
+        }
+      }
+
+      // Check registered users list
+      const registeredUsers = JSON.parse(localStorage.getItem('users') || '[]') as LocalStoredUser[]
+      const reg = registeredUsers.find(
+        (u) =>
+          u.username === userIdOrUsername ||
+          u.id === userIdOrUsername ||
+          u.email === userIdOrUsername,
+      )
+      if (reg) {
+        customName = reg.name || customName
+        customUsername = reg.username || customUsername
+        customAvatar = reg.avatar || customAvatar
+        customBio = reg.bio || customBio
+      }
+    } catch {}
+  }
+
   return {
-    profile: USER_PROFILE_THANH,
-    posts: mockUserPosts,
-    reels: mockUserReels,
-    tagged: mockUserTagged,
+    profile: {
+      username: customUsername,
+      fullName: customName,
+      avatar: customAvatar,
+      bio: customBio,
+      posts: 0,
+      followers: 0,
+      following: 0,
+      isVerified: false,
+    },
+    posts: [],
+    reels: [],
+    tagged: [],
   }
 }

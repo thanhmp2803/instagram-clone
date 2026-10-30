@@ -1,4 +1,7 @@
 const en = {
+  header: {
+    search: 'Search...',
+  },
   sidebar: {
     home: 'Home',
     search: 'Search',
@@ -64,6 +67,9 @@ const en = {
     tagged: 'tagged',
     followers: 'followers',
     following: 'following',
+    follow_btn: 'Follow',
+    following_btn: 'Following',
+    message_btn: 'Message',
     new_story: 'New',
     empty_posts: 'Share photos and videos so everyone can see',
     empty_saved: 'Content you saved will be displayed here',

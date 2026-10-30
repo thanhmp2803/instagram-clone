@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import { MessageBubble } from './MessageBubble'
 import type { IChatRoomProps } from '@types'
-import { getUserByAnyId } from '@mocks'
+import { isSenderCurrentUser } from '@/utils/avatar'
 
 export function ChatRoom({
   conversation,
@@ -168,17 +168,11 @@ export function ChatRoom({
 
         {/* Messages List */}
         {messages.map((message) => {
-          const currentResolvedUser =
-            getUserByAnyId(currentUser.id) || getUserByAnyId(currentUser.username)
-          const senderResolved = getUserByAnyId(message.senderId)
-
-          const isCurrentUser =
-            message.senderId === currentUser.id ||
-            Boolean(
-              currentResolvedUser &&
-                senderResolved &&
-                currentResolvedUser.id === senderResolved.id,
-            )
+          const isCurrentUser = isSenderCurrentUser(
+            message.senderId,
+            currentUser.id,
+            currentUser.username,
+          )
 
           return (
             <MessageBubble
@@ -257,4 +251,3 @@ export function ChatRoom({
     </div>
   )
 }
-

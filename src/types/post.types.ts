@@ -7,4 +7,6 @@ export interface Post {
   likes: number
   comments: number
   time: string
+  created_at?: string
+  userId?: string
 }

@@ -212,3 +212,7 @@ CREATE POLICY "Authenticated users can upload avatars" ON storage.objects FOR IN
 CREATE POLICY "Authenticated users can upload posts" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'posts' AND auth.role() = 'authenticated');
 CREATE POLICY "Authenticated users can upload reels" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'reels' AND auth.role() = 'authenticated');
 
+-- ==============================================================================
+-- 7. ENABLE REALTIME FOR CHAT MESSAGES
+-- ==============================================================================
+ALTER PUBLICATION supabase_realtime ADD TABLE public.messages;

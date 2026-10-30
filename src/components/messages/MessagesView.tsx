@@ -1,22 +1,107 @@
 'use client'
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { ChatList } from './ChatList'
 import { ChatRoom } from './ChatRoom'
-import {
-  currentMockUser,
-  getConversationsForUser,
-  getUserByAnyId,
-} from '@mocks'
+import { currentMockUser, getConversationsForUser, getUserByAnyId } from '@mocks'
 import type { IConversation, IMessage, IMessageUser } from '@types'
 import { useAuth, useMounted } from '@hooks'
 import { createClient, isSupabaseConfigured } from '@/utils/supabase/client'
+import { resolveAvatar, isSenderCurrentUser } from '@/utils/avatar'
 
 const SHARED_MESSAGES_KEY = 'instagram_shared_messages_v3'
 const getUnreadStorageKey = (userId: string) => `instagram_unread_${userId}`
 
 const isValidUUID = (str?: string | null): boolean =>
   Boolean(str && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str))
+
+function mergeAndDeduplicateConversations(
+  currentList: IConversation[],
+  incomingList: IConversation[],
+  currentUserId?: string,
+): IConversation[] {
+  // Map keyed strictly by other participant's username lowercase
+  const participantMap = new Map<string, IConversation>()
+  const all = [...currentList, ...incomingList]
+
+  for (const c of all) {
+    const rawKey = c.participant?.username || c.participant?.id || c.id
+    const key = rawKey.toLowerCase()
+
+    const existing = participantMap.get(key)
+    if (!existing) {
+      participantMap.set(key, c)
+    } else {
+      // Merge: prefer real UUID conversation over mock 'conv-*'
+      const existingIsUUID = isValidUUID(existing.id)
+      const currentIsUUID = isValidUUID(c.id)
+
+      const winner = currentIsUUID && !existingIsUUID ? c : existing
+      const loser = currentIsUUID && !existingIsUUID ? existing : c
+
+      // Merge messages from both, deduplicated by id or (text + timestamp)
+      const msgMap = new Map<string, IMessage>()
+      loser.messages.forEach((m) => {
+        const mKey = m.id || `${m.text}_${m.timestamp}`
+        msgMap.set(mKey, m)
+      })
+      winner.messages.forEach((m) => {
+        const mKey = m.id || `${m.text}_${m.timestamp}`
+        msgMap.set(mKey, m)
+      })
+      const mergedMessages = Array.from(msgMap.values())
+
+      const finalConv: IConversation = {
+        ...winner,
+        participant: {
+          ...winner.participant,
+          name:
+            winner.participant.name && winner.participant.name !== 'Instagram User'
+              ? winner.participant.name
+              : loser.participant.name || winner.participant.name,
+          avatar: resolveAvatar(
+            winner.participant.username,
+            null,
+            winner.participant.avatar || loser.participant.avatar,
+          ),
+        },
+        messages: mergedMessages,
+        lastActivityMs: Math.max(winner.lastActivityMs || 0, loser.lastActivityMs || 0),
+        updatedAt:
+          mergedMessages.length > 0
+            ? mergedMessages[mergedMessages.length - 1].timestamp
+            : winner.updatedAt,
+        unreadCount: Math.max(winner.unreadCount || 0, loser.unreadCount || 0),
+      }
+
+      // If loser had a different ID (e.g. mock ID) and winner is UUID, migrate localStorage store
+      if (typeof window !== 'undefined' && loser.id !== winner.id) {
+        try {
+          const raw = localStorage.getItem(SHARED_MESSAGES_KEY)
+          if (raw) {
+            const storeMap = JSON.parse(raw)
+            if (storeMap[loser.id]) {
+              delete storeMap[loser.id]
+              storeMap[winner.id] = {
+                messages: mergedMessages,
+                lastActivityMs: finalConv.lastActivityMs,
+                lastSenderId: currentUserId || winner.participant.id,
+              }
+              localStorage.setItem(SHARED_MESSAGES_KEY, JSON.stringify(storeMap))
+            }
+          }
+        } catch {}
+      }
+
+      participantMap.set(key, finalConv)
+    }
+  }
+
+  const result = Array.from(participantMap.values())
+  result.sort((a, b) => (b.lastActivityMs || 0) - (a.lastActivityMs || 0))
+  return result
+}
 
 interface StoredConversationEntry {
   messages: IMessage[]
@@ -56,20 +141,26 @@ interface MessageRow {
 export function MessagesView() {
   const mounted = useMounted()
   const { user } = useAuth()
+  const searchParams = useSearchParams()
+  const targetUsernameParam = searchParams.get('username')
   const [searchQuery, setSearchQuery] = useState('')
 
-  // Resolve current logged in user (primary: Mai Phước Thành)
+  // Resolve current logged in user
   const currentUser: IMessageUser = useMemo(() => {
     if (user?.id || user?.username) {
       const demoUser = getUserByAnyId(user.id) || getUserByAnyId(user.username)
       if (demoUser) {
-        return demoUser
+        return {
+          ...demoUser,
+          id: user.id || demoUser.id,
+          avatar: resolveAvatar(demoUser.username, user.email, demoUser.avatar),
+        }
       }
       return {
         id: user.id,
         username: user.username || user.name || 'user',
         name: user.name || 'Instagram User',
-        avatar: user.avatar || '/images/conmeo.jpg',
+        avatar: resolveAvatar(user.username, user.email, user.avatar),
         isOnline: true,
       }
     }
@@ -77,10 +168,7 @@ export function MessagesView() {
   }, [user])
 
   // Get base conversations tailored to this user
-  const baseConversations = useMemo(
-    () => getConversationsForUser(currentUser.id),
-    [currentUser.id],
-  )
+  const baseConversations = useMemo(() => getConversationsForUser(currentUser.id), [currentUser.id])
 
   const [conversations, setConversations] = useState<IConversation[]>(baseConversations)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
@@ -127,7 +215,9 @@ export function MessagesView() {
       // Sort conversations so the one with the newest message/activity is at the top!
       merged.sort((a, b) => (b.lastActivityMs || 0) - (a.lastActivityMs || 0))
 
-      setConversations(merged)
+      setConversations((prev) => {
+        return mergeAndDeduplicateConversations(prev, merged, currentUser.id)
+      })
       setSelectedConversationId((prev) => {
         if (prev && merged.some((c) => c.id === prev)) {
           return prev
@@ -144,7 +234,136 @@ export function MessagesView() {
     reloadConversationsFromStore()
   }, [reloadConversationsFromStore])
 
-  // 2. Listen to cross-tab storage changes (handles real-time unread & sorting across tabs)
+  // 2. Direct message navigation from profile (/messages?username=...)
+  useEffect(() => {
+    if (!targetUsernameParam) return
+    const lowerTarget = targetUsernameParam.toLowerCase()
+    if (lowerTarget === currentUser.username.toLowerCase()) return
+
+    const existing = conversations.find((c) => c.participant.username.toLowerCase() === lowerTarget)
+
+    if (existing) {
+      setSelectedConversationId(existing.id)
+      return
+    }
+
+    const setupDirectConversation = async () => {
+      // Resolve target participant
+      let pUser: IMessageUser | undefined = getUserByAnyId(targetUsernameParam)
+
+      if (!pUser && typeof window !== 'undefined') {
+        try {
+          const registered = JSON.parse(localStorage.getItem('users') || '[]') as Array<{
+            id?: string
+            username?: string
+            name?: string
+            avatar?: string
+          }>
+          const reg = registered.find((u) => (u.username || '').toLowerCase() === lowerTarget)
+          if (reg) {
+            pUser = {
+              id: reg.id || reg.username || lowerTarget,
+              username: reg.username || lowerTarget,
+              name: reg.name || reg.username || 'Instagram User',
+              avatar: reg.avatar || '/images/nonuser.png',
+              isOnline: true,
+            }
+          }
+        } catch {}
+      }
+
+      if (!pUser) {
+        pUser = {
+          id: `user-${lowerTarget}`,
+          username: targetUsernameParam,
+          name: targetUsernameParam,
+          avatar: '/images/nonuser.png',
+          isOnline: true,
+        }
+      }
+
+      let resolvedConvId: string | null = null
+
+      // If Supabase is configured and logged in, check or create conversation in Supabase
+      if (isSupabaseConfigured() && user?.id && isValidUUID(user.id)) {
+        try {
+          const supabase = createClient()
+          const { data: targetProf } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url, is_verified')
+            .or(`username.eq.${targetUsernameParam},id.eq.${targetUsernameParam}`)
+            .maybeSingle()
+
+          if (targetProf && isValidUUID(targetProf.id)) {
+            pUser = {
+              id: targetProf.id,
+              username: targetProf.username,
+              name: targetProf.full_name || targetProf.username,
+              avatar: targetProf.avatar_url || '/images/nonuser.png',
+              isVerified: targetProf.is_verified || false,
+              isOnline: true,
+            }
+
+            const { data: myParticipations } = await supabase
+              .from('conversation_participants')
+              .select('conversation_id')
+              .eq('user_id', user.id)
+
+            const myConvIds = (myParticipations || []).map((p) => p.conversation_id)
+            if (myConvIds.length > 0) {
+              const { data: commonConvs } = await supabase
+                .from('conversation_participants')
+                .select('conversation_id')
+                .eq('user_id', targetProf.id)
+                .in('conversation_id', myConvIds)
+                .limit(1)
+
+              if (commonConvs && commonConvs.length > 0) {
+                resolvedConvId = commonConvs[0].conversation_id
+              }
+            }
+
+            if (!resolvedConvId) {
+              const { data: newConvRow, error: newConvErr } = await supabase
+                .from('conversations')
+                .insert({})
+                .select('id')
+                .single()
+
+              if (!newConvErr && newConvRow) {
+                resolvedConvId = newConvRow.id
+                await supabase.from('conversation_participants').insert([
+                  { conversation_id: resolvedConvId, user_id: user.id },
+                  { conversation_id: resolvedConvId, user_id: targetProf.id },
+                ])
+              }
+            }
+          }
+        } catch (e) {
+          console.warn('Supabase conversation setup notice:', e)
+        }
+      }
+
+      const finalConvId = resolvedConvId || `conv-${currentUser.id}-${pUser.id}`
+      const newConv: IConversation = {
+        id: finalConvId,
+        participant: pUser,
+        messages: [],
+        unreadCount: 0,
+        updatedAt: 'Just now',
+        lastActivityMs: Date.now(),
+      }
+
+      setConversations((prev) => {
+        return mergeAndDeduplicateConversations(prev, [newConv], currentUser.id)
+      })
+      setSelectedConversationId(finalConvId)
+    }
+
+    setupDirectConversation()
+  }, [targetUsernameParam, currentUser.username, currentUser.id, conversations, user?.id])
+
+  // 3. Listen to cross-tab storage changes (handles real-time unread & sorting across tabs)
   useEffect(() => {
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === SHARED_MESSAGES_KEY && e.newValue) {
@@ -168,10 +387,7 @@ export function MessagesView() {
             }
           })
 
-          localStorage.setItem(
-            getUnreadStorageKey(currentUser.id),
-            JSON.stringify(unreadMap),
-          )
+          localStorage.setItem(getUnreadStorageKey(currentUser.id), JSON.stringify(unreadMap))
         } catch (err) {
           console.error('Error handling storage event:', err)
         }
@@ -184,7 +400,7 @@ export function MessagesView() {
     return () => window.removeEventListener('storage', handleStorageChange)
   }, [currentUser.id, reloadConversationsFromStore, selectedConversationId])
 
-  // 3. Supabase Realtime & DB sync if configured
+  // 4. Supabase Realtime & DB sync if configured
   useEffect(() => {
     if (!isSupabaseConfigured() || !isValidUUID(user?.id)) return
 
@@ -205,19 +421,27 @@ export function MessagesView() {
 
         const { data: allParticipants } = await supabase
           .from('conversation_participants')
-          .select(
-            `
-            conversation_id,
-            profiles:user_id (
-              id,
-              username,
-              full_name,
-              avatar_url,
-              is_verified
-            )
-          `,
-          )
+          .select('conversation_id, user_id')
           .in('conversation_id', convIds)
+
+        const allUserIds = Array.from(new Set((allParticipants || []).map((p) => p.user_id)))
+        const profilesMap = new Map<
+          string,
+          {
+            id: string
+            username: string
+            full_name?: string
+            avatar_url?: string
+            is_verified?: boolean
+          }
+        >()
+        if (allUserIds.length > 0) {
+          const { data: profsData } = await supabase
+            .from('profiles')
+            .select('id, username, full_name, avatar_url, is_verified')
+            .in('id', allUserIds)
+          profsData?.forEach((p) => profilesMap.set(p.id, p))
+        }
 
         const { data: messagesData } = await supabase
           .from('messages')
@@ -225,26 +449,29 @@ export function MessagesView() {
           .in('conversation_id', convIds)
           .order('created_at', { ascending: true })
 
-        const participantsList = (allParticipants || []) as unknown as ParticipantRow[]
         const messagesList = (messagesData || []) as unknown as MessageRow[]
 
         const built: IConversation[] = convIds.map((cid) => {
-          const convParts = participantsList.filter(
-            (p) =>
-              p.conversation_id === cid &&
-              p.profiles &&
-              (Array.isArray(p.profiles) ? p.profiles[0]?.id : p.profiles?.id) !== user!.id,
+          const otherPart = (allParticipants || []).find(
+            (p) => p.conversation_id === cid && p.user_id !== user!.id,
           )
-          const prof = Array.isArray(convParts[0]?.profiles)
-            ? convParts[0]?.profiles[0]
-            : convParts[0]?.profiles
+          const prof = otherPart ? profilesMap.get(otherPart.user_id) : undefined
+          const demoOther = getUserByAnyId(otherPart?.user_id) || getUserByAnyId(prof?.username)
+
+          const otherUsername = prof?.username || demoOther?.username || 'user'
+          const otherName = prof?.full_name || demoOther?.name || 'Sarah Connor'
+          const otherAvatar = resolveAvatar(
+            otherUsername,
+            null,
+            prof?.avatar_url || demoOther?.avatar,
+          )
 
           const otherParticipant: IMessageUser = {
-            id: prof?.id || 'other',
-            username: prof?.username || 'user',
-            name: prof?.full_name || 'Instagram User',
-            avatar: prof?.avatar_url || '/images/nonuser.png',
-            isVerified: prof?.is_verified ?? false,
+            id: prof?.id || otherPart?.user_id || demoOther?.id || 'other',
+            username: otherUsername,
+            name: otherName,
+            avatar: otherAvatar,
+            isVerified: prof?.is_verified ?? demoOther?.isVerified ?? false,
             isOnline: true,
           }
 
@@ -282,12 +509,30 @@ export function MessagesView() {
           }
         })
 
-        // Sort newest on top
-        built.sort((a, b) => (b.lastActivityMs || 0) - (a.lastActivityMs || 0))
-
+        // Sort and merge with existing conversations using single-source deduplication
         if (built.length > 0) {
-          setConversations(built)
-          setSelectedConversationId((prev) => prev || built[0].id)
+          setConversations((prev) => {
+            return mergeAndDeduplicateConversations(prev, built, currentUser.id)
+          })
+
+          // Ensure selectedConversationId points to the UUID if it was pointing to mock ID
+          setSelectedConversationId((prevSelected) => {
+            if (!prevSelected) return built[0]?.id || null
+            if (isValidUUID(prevSelected)) {
+              // If already UUID and exists in built, keep it
+              return prevSelected
+            }
+            // If it was mock ID (e.g. conv-thanh-sarah), find matching built UUID
+            const match = built.find((b) => {
+              const prevMatch = baseConversations.find((bc) => bc.id === prevSelected)
+              return (
+                prevMatch &&
+                prevMatch.participant.username.toLowerCase() ===
+                  b.participant.username.toLowerCase()
+              )
+            })
+            return match ? match.id : prevSelected
+          })
         }
       } catch (err) {
         console.error('Error fetching Supabase conversations:', err)
@@ -321,17 +566,24 @@ export function MessagesView() {
           }
 
           setConversations((prev) => {
+            const isFromOther = !isSenderCurrentUser(
+              newMsg.sender_id,
+              currentUser.id,
+              currentUser.username,
+            )
             const isCurrentChat = newMsg.conversation_id === selectedConversationId
-            const isFromOther = newMsg.sender_id !== currentUser.id
 
-            const targetIndex = prev.findIndex((c) => c.id === newMsg.conversation_id)
+            const targetIndex = prev.findIndex(
+              (c) => c.id === newMsg.conversation_id || c.participant.id === newMsg.sender_id,
+            )
             if (targetIndex === -1) return prev
 
             const target = prev[targetIndex]
             const exists = target.messages.some(
               (m) =>
                 m.id === newMsg.id ||
-                (m.text === newMsg.text && m.senderId === newMsg.sender_id),
+                (m.text === newMsg.text &&
+                  isSenderCurrentUser(m.senderId, newMsg.sender_id, currentUser.username)),
             )
             if (exists) return prev
 
@@ -341,12 +593,11 @@ export function MessagesView() {
               messages: updatedMessages,
               updatedAt: time,
               lastActivityMs: Date.now(),
-              unreadCount:
-                !isCurrentChat && isFromOther ? (target.unreadCount || 0) + 1 : 0,
+              unreadCount: !isCurrentChat && isFromOther ? (target.unreadCount || 0) + 1 : 0,
             }
 
             // Move updated conversation to top (Index 0)
-            const remaining = prev.filter((c) => c.id !== newMsg.conversation_id)
+            const remaining = prev.filter((_, idx) => idx !== targetIndex)
             return [updatedConversation, ...remaining]
           })
         },
@@ -358,8 +609,7 @@ export function MessagesView() {
     }
   }, [currentUser.id, selectedConversationId, user])
 
-  const selectedConversation =
-    conversations.find((c) => c.id === selectedConversationId) || null
+  const selectedConversation = conversations.find((c) => c.id === selectedConversationId) || null
 
   // Select a conversation and clear its unread count
   const handleSelectConversation = useCallback(
@@ -372,18 +622,13 @@ export function MessagesView() {
           const unreadRaw = localStorage.getItem(getUnreadStorageKey(currentUser.id))
           const unreadMap = unreadRaw ? JSON.parse(unreadRaw) : {}
           unreadMap[id] = 0
-          localStorage.setItem(
-            getUnreadStorageKey(currentUser.id),
-            JSON.stringify(unreadMap),
-          )
+          localStorage.setItem(getUnreadStorageKey(currentUser.id), JSON.stringify(unreadMap))
         } catch (e) {
           console.error('Failed to clear unread in localStorage:', e)
         }
       }
 
-      setConversations((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c)),
-      )
+      setConversations((prev) => prev.map((c) => (c.id === id ? { ...c, unreadCount: 0 } : c)))
     },
     [currentUser.id],
   )
@@ -446,44 +691,160 @@ export function MessagesView() {
         return updatedList
       })
 
-      // Send to Supabase if valid UUID
-      if (
-        isSupabaseConfigured() &&
-        isValidUUID(selectedConversationId) &&
-        isValidUUID(user?.id)
-      ) {
+      // Send to Supabase
+      if (isSupabaseConfigured()) {
         try {
           const supabase = createClient()
-          const { data, error } = await supabase
-            .from('messages')
-            .insert({
-              conversation_id: selectedConversationId,
-              sender_id: user!.id,
-              text,
-            })
-            .select('id')
-            .single()
 
-          if (!error && data) {
-            setConversations((prev) =>
-              prev.map((c) =>
-                c.id === selectedConversationId
-                  ? {
-                      ...c,
-                      messages: c.messages.map((m) =>
-                        m.id === tempId ? { ...m, id: data.id, status: 'delivered' } : m,
-                      ),
-                    }
-                  : c,
-              ),
-            )
+          // 1. Determine effective sender ID (valid UUID)
+          let senderId = user?.id
+          if (!isValidUUID(senderId)) {
+            const { data: authData } = await supabase.auth.getUser()
+            if (authData?.user?.id) {
+              senderId = authData.user.id
+            }
+          }
+          if (!isValidUUID(senderId)) {
+            const uLower = (currentUser.username || '').toLowerCase()
+            if (uLower.includes('thanh') || uLower.includes('admin')) {
+              senderId = 'a0000000-0000-0000-0000-000000000005'
+            } else if (uLower.includes('sarah') || uLower.includes('creative')) {
+              senderId = 'a0000000-0000-0000-0000-000000000001'
+            } else if (uLower.includes('elena') || uLower.includes('chef')) {
+              senderId = 'a0000000-0000-0000-0000-000000000003'
+            } else {
+              senderId = 'a0000000-0000-0000-0000-000000000005'
+            }
+          }
+
+          // Ensure sender profile exists in public.profiles
+          await supabase.from('profiles').upsert(
+            {
+              id: senderId,
+              username: currentUser.username,
+              full_name: currentUser.name,
+              avatar_url: resolveAvatar(currentUser.username, user?.email, currentUser.avatar),
+            },
+            { onConflict: 'id' },
+          )
+
+          let activeConvId = isValidUUID(selectedConversationId) ? selectedConversationId : null
+
+          // If current conversation was stored locally with string ID, provision in Supabase
+          if (!activeConvId) {
+            const currentConv = conversations.find((c) => c.id === selectedConversationId)
+            if (currentConv && currentConv.participant) {
+              const targetName = currentConv.participant.username
+              let targetUserId: string | null = null
+
+              // 2. Query or provision target user profile
+              const { data: targetProf } = await supabase
+                .from('profiles')
+                .select('id')
+                .or(`username.eq.${targetName},id.eq.${targetName}`)
+                .maybeSingle()
+
+              if (targetProf && isValidUUID(targetProf.id)) {
+                targetUserId = targetProf.id
+              } else {
+                // Determine target UUID from demo users
+                const demoTarget = getUserByAnyId(targetName)
+                const tLower = targetName.toLowerCase()
+                let targetUUID = 'a0000000-0000-0000-0000-000000000001'
+                if (tLower.includes('thanh') || tLower.includes('admin')) {
+                  targetUUID = 'a0000000-0000-0000-0000-000000000005'
+                } else if (tLower.includes('elena') || tLower.includes('chef')) {
+                  targetUUID = 'a0000000-0000-0000-0000-000000000003'
+                }
+                targetUserId = targetUUID
+
+                await supabase.from('profiles').upsert(
+                  {
+                    id: targetUserId,
+                    username: demoTarget?.username || targetName,
+                    full_name: demoTarget?.name || targetName,
+                    avatar_url: resolveAvatar(targetName, null, demoTarget?.avatar),
+                  },
+                  { onConflict: 'id' },
+                )
+              }
+
+              // 3. Check if conversation already exists between senderId and targetUserId
+              const { data: myParticipations } = await supabase
+                .from('conversation_participants')
+                .select('conversation_id')
+                .eq('user_id', senderId)
+
+              const myConvIds = (myParticipations || []).map((p) => p.conversation_id)
+              if (myConvIds.length > 0) {
+                const { data: commonConvs } = await supabase
+                  .from('conversation_participants')
+                  .select('conversation_id')
+                  .eq('user_id', targetUserId)
+                  .in('conversation_id', myConvIds)
+                  .limit(1)
+
+                if (commonConvs && commonConvs.length > 0) {
+                  activeConvId = commonConvs[0].conversation_id
+                }
+              }
+
+              // 4. Create new conversation in Supabase if not found
+              if (!activeConvId) {
+                const { data: newConv } = await supabase
+                  .from('conversations')
+                  .insert({})
+                  .select('id')
+                  .single()
+
+                if (newConv) {
+                  activeConvId = newConv.id
+                  await supabase.from('conversation_participants').insert([
+                    { conversation_id: activeConvId, user_id: senderId },
+                    { conversation_id: activeConvId, user_id: targetUserId },
+                  ])
+                }
+              }
+            }
+          }
+
+          // 5. Insert message into Supabase public.messages table
+          if (activeConvId) {
+            const { data, error } = await supabase
+              .from('messages')
+              .insert({
+                conversation_id: activeConvId,
+                sender_id: senderId,
+                text,
+              })
+              .select('id')
+              .single()
+
+            if (!error && data) {
+              setSelectedConversationId(activeConvId)
+              setConversations((prev) =>
+                prev.map((c) =>
+                  c.id === selectedConversationId || c.id === activeConvId
+                    ? {
+                        ...c,
+                        id: activeConvId,
+                        messages: c.messages.map((m) =>
+                          m.id === tempId ? { ...m, id: data.id, status: 'delivered' } : m,
+                        ),
+                      }
+                    : c,
+                ),
+              )
+            } else if (error) {
+              console.warn('Supabase message insert notice:', error.message)
+            }
           }
         } catch (err) {
           console.error('Failed to send message to Supabase:', err)
         }
       }
     },
-    [currentUser.id, selectedConversationId, user],
+    [currentUser, selectedConversationId, user, conversations],
   )
 
   // Toggle like reaction
@@ -596,9 +957,7 @@ export function MessagesView() {
 
       {/* Right Pane (Active Chat Room) */}
       <div
-        className={`flex-1 h-full bg-black ${
-          selectedConversationId ? 'flex' : 'hidden lg:flex'
-        }`}
+        className={`flex-1 h-full bg-black ${selectedConversationId ? 'flex' : 'hidden lg:flex'}`}
       >
         <ChatRoom
           conversation={selectedConversation}

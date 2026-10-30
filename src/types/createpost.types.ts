@@ -3,6 +3,8 @@ export type UploadStep = 'upload' | 'caption'
 export interface UseCreatePostReturn {
   dragActive: boolean
   selectedFileUrl: string
+  selectedFile?: File | null
+  isVideo?: boolean
   step: UploadStep
   caption: string
   isUploading?: boolean

@@ -1,4 +1,7 @@
 const vi = {
+  header: {
+    search: 'Tìm kiếm...',
+  },
   sidebar: {
     home: 'Trang chủ',
     search: 'Tìm kiếm',
@@ -64,6 +67,9 @@ const vi = {
     tagged: 'được gắn thẻ',
     followers: 'người theo dõi',
     following: 'đang theo dõi',
+    follow_btn: 'Theo dõi',
+    following_btn: 'Đang theo dõi',
+    message_btn: 'Nhắn tin',
     new_story: 'Mới',
     empty_posts: 'Chia sẻ ảnh và video để mọi người có thể nhìn thấy',
     empty_saved: 'Nội dung bạn đã lưu sẽ hiển thị ở đây',

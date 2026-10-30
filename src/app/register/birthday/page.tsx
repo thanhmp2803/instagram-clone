@@ -40,26 +40,59 @@ export default function BirthdayPage() {
 
     if (tempUserData.email) {
       try {
-        // Register in Supabase Auth if configured
-        if (signUp) {
-          await signUp(
-            tempUserData.email,
-            tempUserData.password,
-            tempUserData.name,
-            tempUserData.username || tempUserData.name,
-          )
+        const resolvedUsername = tempUserData.username || tempUserData.name || 'user'
+        const registeredUser = {
+          id: tempUserData.id || `user_${Date.now()}`,
+          name: tempUserData.name || resolvedUsername,
+          username: resolvedUsername,
+          email: tempUserData.email,
+          avatar: '/images/nonuser.png',
         }
 
-        // Save user to users list for mock compatibility
+        // Register in Supabase Auth if configured
+        if (signUp) {
+          try {
+            await signUp(
+              tempUserData.email,
+              tempUserData.password,
+              tempUserData.name,
+              resolvedUsername,
+            )
+          } catch (signUpErr) {
+            console.warn('Supabase signUp notice:', signUpErr)
+          }
+        }
+
+        // Try direct password login with Supabase to establish real session with UUID
+        let loggedIn = false
+        if (tempUserData.password) {
+          try {
+            const res = await login(tempUserData.email, tempUserData.password)
+            if (!res?.error) {
+              loggedIn = true
+            }
+          } catch (loginErr) {
+            console.warn('Direct login notice:', loginErr)
+          }
+        }
+
+        // If Supabase login succeeded, retrieve the active user object from session
+        const currentSavedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null
+        const activeUserObj = currentSavedUser ? JSON.parse(currentSavedUser) : registeredUser
+
+        // If direct Supabase login was not possible, fallback to registeredUser
+        if (!loggedIn) {
+          await login(registeredUser)
+        }
+
+        // Save user to users list for mock compatibility with real or generated ID
         const existingUsers = JSON.parse(localStorage.getItem('users') || '[]')
-        existingUsers.push(tempUserData)
+        existingUsers.push(activeUserObj)
         localStorage.setItem('users', JSON.stringify(existingUsers))
 
         // Remove temp user data
         localStorage.removeItem('tempUser')
 
-        // Auto login and redirect
-        await login(tempUserData)
         router.push('/')
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Registration failed'
