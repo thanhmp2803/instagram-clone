@@ -1,6 +1,6 @@
 import type { IConversation, IMessage, IMessageUser } from '@types'
 
-// 1. Core 3 Users
+// 1. Core Users + Meta AI
 export const USER_THANH: IMessageUser = {
   id: 'user-thanh',
   username: 'pthanh2803',
@@ -35,15 +35,36 @@ export const USER_ELENA: IMessageUser = {
   bio: 'Sourdough baker & Culinary creator 🥖',
 }
 
+export const USER_META_AI: IMessageUser = {
+  id: 'meta-ai',
+  username: 'meta_ai',
+  name: 'Meta AI',
+  avatar: '/images/meta-ai.svg',
+  isVerified: true,
+  isOnline: true,
+  lastSeen: 'Trợ lý AI • Luôn trực tuyến',
+  bio: 'Meta AI thông minh trên Instagram ✨ Đặt câu hỏi, xin gợi ý caption hoặc trò chuyện cùng tôi!',
+}
+
 // Default mock user is the primary account: Mai Phước Thành
 export const currentMockUser: IMessageUser = USER_THANH
 
-export const ALL_DEMO_USERS: IMessageUser[] = [USER_THANH, USER_SARAH, USER_ELENA]
+export const ALL_DEMO_USERS: IMessageUser[] = [USER_THANH, USER_SARAH, USER_ELENA, USER_META_AI]
 
 // Helper to find any demo user by their ID, username or legacy ID
 export function getUserByAnyId(identifier?: string | null): IMessageUser | undefined {
   if (!identifier) return undefined
   const idLower = identifier.toLowerCase()
+
+  if (
+    idLower === 'meta-ai' ||
+    idLower === 'meta_ai' ||
+    idLower === 'user-meta-ai' ||
+    idLower.includes('meta-ai') ||
+    idLower.includes('meta_ai')
+  ) {
+    return USER_META_AI
+  }
 
   if (
     idLower === 'user-thanh' ||
@@ -87,6 +108,16 @@ export function getSenderAvatar(senderId: string, fallbackAvatar?: string): stri
 }
 
 // 2. Initial Shared Messages between conversations
+export const initialMessagesMetaAi: IMessage[] = [
+  {
+    id: 'm-ai-1',
+    senderId: 'meta-ai',
+    text: 'Xin chào! 👋 Mình là Meta AI trên Instagram. Mình có thể giúp bạn viết caption xịn, gợi ý ý tưởng làm Reels, giải đáp thắc mắc hoặc trò chuyện bất cứ khi nào bạn muốn. Bạn cần mình giúp gì hôm nay nè? ✨',
+    timestamp: '10:00 AM',
+    status: 'read',
+  },
+]
+
 export const initialMessagesThanhSarah: IMessage[] = [
   {
     id: 'm-ts-1',
@@ -174,9 +205,19 @@ export function getConversationsForUser(currentUserIdOrUsername?: string | null)
   const resolved = getUserByAnyId(currentUserIdOrUsername) || USER_THANH
   const now = Date.now()
 
+  const metaAiConversation: IConversation = {
+    id: 'conv-meta-ai',
+    participant: USER_META_AI,
+    messages: initialMessagesMetaAi,
+    unreadCount: 0,
+    updatedAt: '10:00 AM',
+    lastActivityMs: now - 1000 * 60 * 5, // 5 mins ago
+  }
+
   // Case A: Mai Phước Thành (@pthanh2803) is logged in
   if (resolved.id === USER_THANH.id) {
     return [
+      metaAiConversation,
       {
         id: 'conv-thanh-sarah',
         participant: USER_SARAH,
@@ -199,6 +240,7 @@ export function getConversationsForUser(currentUserIdOrUsername?: string | null)
   // Case B: Sarah Connor (@creative_coder) is logged in
   if (resolved.id === USER_SARAH.id) {
     return [
+      metaAiConversation,
       {
         id: 'conv-thanh-sarah',
         participant: USER_THANH, // Participant is Mai Phước Thành!
@@ -220,6 +262,7 @@ export function getConversationsForUser(currentUserIdOrUsername?: string | null)
 
   // Case C: Elena Rostova (@chef_artisan) is logged in
   return [
+    metaAiConversation,
     {
       id: 'conv-thanh-elena',
       participant: USER_THANH, // Participant is Mai Phước Thành!

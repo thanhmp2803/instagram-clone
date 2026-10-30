@@ -7,6 +7,7 @@ export const DEFAULT_AVATAR = '/images/nonuser.png'
 export const THANH_AVATAR = '/images/conmeo.jpg'
 export const SARAH_AVATAR =
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80'
+export const META_AI_AVATAR = '/images/meta-ai.svg'
 export const ELENA_AVATAR =
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80'
 
@@ -30,6 +31,11 @@ export function resolveAvatar(
 
   const u = (username || '').toLowerCase().trim()
   const e = (email || '').toLowerCase().trim()
+
+  // Meta AI
+  if (u === 'meta_ai' || u === 'meta-ai' || u.includes('meta_ai') || u.includes('meta-ai')) {
+    return META_AI_AVATAR
+  }
 
   // 1. Sarah Connor (@creative_coder / sarah@gmail.com)
   if (

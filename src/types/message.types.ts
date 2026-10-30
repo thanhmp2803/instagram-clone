@@ -48,6 +48,7 @@ export interface IChatRoomProps {
   onSendMessage: (text: string) => void
   onToggleLikeMessage?: (messageId: string) => void
   onBack?: () => void
+  isAiTyping?: boolean
 }
 
 export interface IMessageBubbleProps {
@@ -56,4 +57,3 @@ export interface IMessageBubbleProps {
   participant: IMessageUser
   onToggleLike?: (messageId: string) => void
 }
-

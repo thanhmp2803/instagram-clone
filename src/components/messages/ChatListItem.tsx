@@ -8,6 +8,10 @@ export function ChatListItem({ conversation, isSelected, onClick }: IChatListIte
   const { participant, messages, unreadCount, updatedAt } = conversation
   const lastMessage = messages[messages.length - 1]
   const hasUnread = Boolean(unreadCount && unreadCount > 0)
+  const isMetaAi =
+    participant.id === 'meta-ai' ||
+    participant.username === 'meta_ai' ||
+    participant.username.includes('meta_ai')
 
   return (
     <button
@@ -23,22 +27,30 @@ export function ChatListItem({ conversation, isSelected, onClick }: IChatListIte
       {/* Participant Avatar with Online Indicator */}
       <div className="relative w-13 h-13 sm:w-14 sm:h-14 flex-shrink-0">
         <div
-          className={`w-full h-full rounded-full overflow-hidden border ${
-            hasUnread ? 'border-blue-500 ring-2 ring-blue-500/30' : 'border-zinc-800'
+          className={`w-full h-full rounded-full overflow-hidden ${
+            isMetaAi
+              ? 'p-[2px] bg-gradient-to-tr from-[#0064E0] via-[#8B5CF6] to-[#EC4899] shadow-sm'
+              : hasUnread
+                ? 'border border-blue-500 ring-2 ring-blue-500/30'
+                : 'border border-zinc-800'
           }`}
         >
-          <Image
-            src={participant.avatar}
-            alt={participant.username}
-            width={56}
-            height={56}
-            className="w-full h-full object-cover"
-          />
+          <div className="w-full h-full rounded-full overflow-hidden bg-black">
+            <Image
+              src={participant.avatar}
+              alt={participant.username}
+              width={56}
+              height={56}
+              className="w-full h-full object-cover"
+            />
+          </div>
         </div>
         {participant.isOnline && (
           <span
             aria-label="Online"
-            className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-black rounded-full"
+            className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-2 border-black rounded-full ${
+              isMetaAi ? 'bg-cyan-400' : 'bg-green-500'
+            }`}
           />
         )}
       </div>
@@ -46,7 +58,7 @@ export function ChatListItem({ conversation, isSelected, onClick }: IChatListIte
       {/* User Information and Latest Message Preview */}
       <div className="flex-1 min-w-0">
         <div className="flex items-center justify-between mb-1">
-          <div className="flex items-center gap-1 truncate">
+          <div className="flex items-center gap-1.5 truncate">
             <span
               className={`text-sm truncate ${
                 hasUnread ? 'text-white font-bold' : 'text-zinc-100 font-semibold'
@@ -54,8 +66,14 @@ export function ChatListItem({ conversation, isSelected, onClick }: IChatListIte
             >
               {participant.name || participant.username}
             </span>
-            {participant.isVerified && (
-              <CheckCircle className="w-3.5 h-3.5 fill-blue-500 text-black flex-shrink-0" />
+            {isMetaAi ? (
+              <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full bg-gradient-to-r from-blue-500 via-indigo-500 to-fuchsia-500 text-white leading-none tracking-wider shadow-sm">
+                AI
+              </span>
+            ) : (
+              participant.isVerified && (
+                <CheckCircle className="w-3.5 h-3.5 fill-blue-500 text-black flex-shrink-0" />
+              )
             )}
           </div>
           <span
@@ -73,7 +91,7 @@ export function ChatListItem({ conversation, isSelected, onClick }: IChatListIte
               hasUnread ? 'text-white font-semibold' : 'text-zinc-400 font-normal'
             }`}
           >
-            {lastMessage ? lastMessage.text : 'Start a conversation'}
+            {lastMessage ? lastMessage.text : 'Hỏi Meta AI bất cứ điều gì...'}
           </p>
 
           {/* Unread Message Notification Badge / Dot */}

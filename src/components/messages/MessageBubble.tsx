@@ -49,7 +49,7 @@ export function MessageBubble({
               : 'bg-zinc-800 text-zinc-100 rounded-bl-sm border border-zinc-700/60'
           }`}
         >
-          <p>{message.text}</p>
+          <p className="whitespace-pre-wrap">{message.text}</p>
         </div>
 
         {/* Liked Heart Reaction Badge */}
@@ -83,9 +83,7 @@ export function MessageBubble({
         }`}
       >
         <Heart
-          className={`w-4 h-4 ${
-            message.liked ? 'fill-red-500 text-red-500' : 'stroke-[1.75]'
-          }`}
+          className={`w-4 h-4 ${message.liked ? 'fill-red-500 text-red-500' : 'stroke-[1.75]'}`}
         />
       </button>
     </div>

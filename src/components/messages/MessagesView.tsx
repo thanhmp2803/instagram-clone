@@ -171,6 +171,7 @@ export function MessagesView() {
   const baseConversations = useMemo(() => getConversationsForUser(currentUser.id), [currentUser.id])
 
   const [conversations, setConversations] = useState<IConversation[]>(baseConversations)
+  const [isAiTyping, setIsAiTyping] = useState<boolean>(false)
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(
     baseConversations[0]?.id || null,
   )
@@ -615,6 +616,7 @@ export function MessagesView() {
   const handleSelectConversation = useCallback(
     (id: string) => {
       setSelectedConversationId(id)
+      setIsAiTyping(false)
 
       // Clear unread in localStorage
       if (typeof window !== 'undefined') {
@@ -690,6 +692,90 @@ export function MessagesView() {
 
         return updatedList
       })
+
+      // Check if chatting with Meta AI Assistant
+      const activeConv = conversations.find((c) => c.id === selectedConversationId)
+      const isMetaAi =
+        selectedConversationId === 'conv-meta-ai' ||
+        activeConv?.participant?.id === 'meta-ai' ||
+        activeConv?.participant?.username === 'meta_ai' ||
+        activeConv?.participant?.username?.toLowerCase().includes('meta_ai')
+
+      if (isMetaAi) {
+        setIsAiTyping(true)
+        try {
+          const res = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              message: text,
+              history: activeConv?.messages?.slice(-6).map((m) => ({
+                role: isSenderCurrentUser(m.senderId, currentUser.id, currentUser.username)
+                  ? 'user'
+                  : 'model',
+                text: m.text,
+              })),
+            }),
+          })
+
+          const data = await res.json()
+          const replyText =
+            data.reply || 'Meta AI đang bận kết nối, bạn thử lại sau giây lát nhé! ✨'
+
+          setTimeout(() => {
+            const aiTime = new Date().toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit',
+            })
+            const aiMs = Date.now()
+            const aiMsg: IMessage = {
+              id: `ai-msg-${aiMs}`,
+              senderId: 'meta-ai',
+              text: replyText,
+              timestamp: aiTime,
+              status: 'delivered',
+            }
+
+            setConversations((prev) => {
+              const targetIndex = prev.findIndex((c) => c.id === selectedConversationId)
+              if (targetIndex === -1) return prev
+
+              const target = prev[targetIndex]
+              const updatedMessages = [...target.messages, aiMsg]
+              const updatedConv: IConversation = {
+                ...target,
+                messages: updatedMessages,
+                updatedAt: aiTime,
+                lastActivityMs: aiMs,
+              }
+
+              // Persist to shared localStorage map
+              if (typeof window !== 'undefined') {
+                try {
+                  const raw = localStorage.getItem(SHARED_MESSAGES_KEY)
+                  const map = raw ? JSON.parse(raw) : {}
+                  map[selectedConversationId] = {
+                    messages: updatedMessages,
+                    lastActivityMs: aiMs,
+                    lastSenderId: 'meta-ai',
+                  }
+                  localStorage.setItem(SHARED_MESSAGES_KEY, JSON.stringify(map))
+                } catch (e) {
+                  console.error('Failed to save AI reply to localStorage:', e)
+                }
+              }
+
+              return prev.map((c) => (c.id === selectedConversationId ? updatedConv : c))
+            })
+
+            setIsAiTyping(false)
+          }, 600)
+        } catch (aiErr) {
+          console.error('Error generating AI response:', aiErr)
+          setIsAiTyping(false)
+        }
+        return
+      }
 
       // Send to Supabase
       if (isSupabaseConfigured()) {
@@ -965,6 +1051,7 @@ export function MessagesView() {
           onSendMessage={handleSendMessage}
           onToggleLikeMessage={handleToggleLikeMessage}
           onBack={() => setSelectedConversationId(null)}
+          isAiTyping={isAiTyping}
         />
       </div>
     </div>
