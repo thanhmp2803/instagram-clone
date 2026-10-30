@@ -5,12 +5,13 @@ import { useTranslation } from 'react-i18next'
 import { useMounted, useAuth } from '@hooks'
 import { useMemo, useState } from 'react'
 import { CreatePost, ProfileDropdown } from '@components'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 export function Sidebar() {
   const mounted = useMounted()
   const { t, ready } = useTranslation()
   const router = useRouter()
+  const pathname = usePathname()
   const { user } = useAuth()
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
@@ -67,13 +68,24 @@ export function Sidebar() {
     <div className="fixed left-0 top-0 h-screen w-[250px] bg-black text-white flex flex-col justify-between p-4 border-r border-e-zinc-700 z-10">
       {/* Logo and Main Menu */}
       <div className="flex-1">
-        <h1 className="text-3xl font-instagram mt-5 mb-8 ms-2 cursor-pointer">Instagram</h1>
+        <h1
+          onClick={() => router.push('/')}
+          className="text-3xl font-instagram mt-5 mb-8 ms-2 cursor-pointer hover:opacity-80 transition-opacity"
+        >
+          Instagram
+        </h1>
 
         <nav className="flex flex-col space-y-4">
           {mainItems.map((item, index) => {
             const Icon = item.icon
             const isCreateButton = item.label === t('sidebar.create')
             const isHomeButton = item.label === t('sidebar.home')
+            const isReelsButton = item.label === t('sidebar.reels') || item.path === '/reels'
+
+            const isActive =
+              (isHomeButton && pathname === '/') ||
+              (isReelsButton && pathname === '/reels') ||
+              (item.path && item.path !== '/' && pathname === item.path)
 
             return (
               <button
@@ -83,12 +95,20 @@ export function Sidebar() {
                     setIsCreatePostOpen(true)
                   } else if (isHomeButton) {
                     router.push('/')
+                  } else if (isReelsButton) {
+                    router.push('/reels')
+                  } else if (item.path) {
+                    router.push(item.path)
                   }
                 }}
-                className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer"
+                className={`flex items-center space-x-4 p-2 rounded-lg transition cursor-pointer ${
+                  isActive
+                    ? 'bg-zinc-800/90 text-white font-bold'
+                    : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
+                }`}
               >
-                <Icon size={24} />
-                <span className="font-medium">{item.label}</span>
+                <Icon size={24} strokeWidth={isActive ? 2.5 : 2} />
+                <span className={isActive ? 'font-bold' : 'font-medium'}>{item.label}</span>
               </button>
             )
           })}
@@ -103,16 +123,24 @@ export function Sidebar() {
                   setIsProfileMenuOpen(!isProfileMenuOpen)
                 }
               }}
-              className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer w-full"
+              className={`flex items-center space-x-4 p-2 rounded-lg transition cursor-pointer w-full ${
+                pathname === '/profile'
+                  ? 'bg-zinc-800/90 text-white font-bold'
+                  : 'text-zinc-300 hover:bg-zinc-800/60 hover:text-white'
+              }`}
             >
               <Image
                 src={user ? '/images/conmeo.jpg' : '/images/nonuser.png'}
                 alt="Profile"
                 width={24}
                 height={24}
-                className="w-6 h-6 rounded-full object-cover aspect-square"
+                className={`w-6 h-6 rounded-full object-cover aspect-square ${
+                  pathname === '/profile' ? 'ring-2 ring-white' : ''
+                }`}
               />
-              <span className="font-medium">{t('sidebar.profile')}</span>
+              <span className={pathname === '/profile' ? 'font-bold' : 'font-medium'}>
+                {t('sidebar.profile')}
+              </span>
             </button>
 
             {user && (
@@ -134,7 +162,7 @@ export function Sidebar() {
           return (
             <button
               key={index}
-              className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer"
+              className="flex items-center space-x-4 hover:bg-zinc-800 p-2 rounded-lg transition cursor-pointer text-zinc-300 hover:text-white"
             >
               <Icon size={24} />
               <span className="font-medium">{item.label}</span>
