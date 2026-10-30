@@ -60,6 +60,8 @@ const vi = {
     edit_profile: 'Chỉnh sửa trang cá nhân',
     view_archive: 'Xem kho lưu trữ',
     posts: 'bài viết',
+    saved: 'đã lưu',
+    tagged: 'được gắn thẻ',
     followers: 'người theo dõi',
     following: 'đang theo dõi',
     new_story: 'Mới',

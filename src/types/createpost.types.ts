@@ -5,13 +5,14 @@ export interface UseCreatePostReturn {
   selectedFileUrl: string
   step: UploadStep
   caption: string
+  isUploading?: boolean
   setCaption: (caption: string) => void
   handleDrag: (e: React.DragEvent) => void
   handleDrop: (e: React.DragEvent) => void
   handleFileSelect: () => void
   handleGoBack: () => void
   handleNext: () => void
-  handlePost: (onClose: () => void) => void
+  handlePost: (onClose: () => void) => Promise<void> | void
 }
 
 export interface CreatePostProps {

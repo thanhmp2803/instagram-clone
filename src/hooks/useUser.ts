@@ -1,13 +1,9 @@
 import { useContext } from 'react'
 import { AuthContext } from '@context'
 import { useLocalStorage } from '@hooks'
+import type { IUser } from '@types'
 
-export interface IUser {
-  id: string
-  name: string
-  email: string
-  authToken?: string
-}
+export type { IUser }
 
 export const useUser = () => {
   const context = useContext(AuthContext)

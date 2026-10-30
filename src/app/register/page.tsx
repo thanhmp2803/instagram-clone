@@ -64,6 +64,7 @@ export default function RegisterPage() {
     const newUser = {
       id: Date.now().toString(),
       name: formData.fullName,
+      username: formData.username.trim() || formData.fullName.toLowerCase().replace(/\s+/g, '_'),
       email: formData.email,
       password: formData.password,
       authToken: `token_${Date.now()}`,

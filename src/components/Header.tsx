@@ -21,8 +21,8 @@ export const Header = () => {
     setSearchTerm(debouncedSearchValue)
   }, [debouncedSearchValue, setSearchTerm])
 
-  // Hide header on profile and reels pages
-  if (pathname === '/profile' || pathname === '/reels') {
+  // Hide header on profile, reels and messages pages
+  if (pathname === '/profile' || pathname === '/reels' || pathname === '/messages') {
     return null
   }
 

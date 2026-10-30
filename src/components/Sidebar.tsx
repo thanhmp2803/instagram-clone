@@ -81,10 +81,13 @@ export function Sidebar() {
             const isCreateButton = item.label === t('sidebar.create')
             const isHomeButton = item.label === t('sidebar.home')
             const isReelsButton = item.label === t('sidebar.reels') || item.path === '/reels'
+            const isMessagesButton =
+              item.label === t('sidebar.messages') || item.path === '/messages'
 
             const isActive =
               (isHomeButton && pathname === '/') ||
               (isReelsButton && pathname === '/reels') ||
+              (isMessagesButton && pathname === '/messages') ||
               (item.path && item.path !== '/' && pathname === item.path)
 
             return (
@@ -97,6 +100,8 @@ export function Sidebar() {
                     router.push('/')
                   } else if (isReelsButton) {
                     router.push('/reels')
+                  } else if (isMessagesButton) {
+                    router.push('/messages')
                   } else if (item.path) {
                     router.push(item.path)
                   }
@@ -130,7 +135,7 @@ export function Sidebar() {
               }`}
             >
               <Image
-                src={user ? '/images/conmeo.jpg' : '/images/nonuser.png'}
+                src={user?.avatar || (user ? '/images/conmeo.jpg' : '/images/nonuser.png')}
                 alt="Profile"
                 width={24}
                 height={24}

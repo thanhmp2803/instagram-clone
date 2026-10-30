@@ -4,17 +4,26 @@ import { useAuth } from '@hooks'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Loader } from 'lucide-react'
 
 export default function ProfilePage() {
-  const { user } = useAuth()
+  const { user, loading } = useAuth()
   const router = useRouter()
   const { t } = useTranslation()
 
   useEffect(() => {
-    if (!user) {
+    if (!loading && !user) {
       router.push('/login')
     }
-  }, [user, router])
+  }, [user, loading, router])
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <Loader className="w-6 h-6 animate-spin text-white" />
+      </div>
+    )
+  }
 
   if (!user) {
     return (

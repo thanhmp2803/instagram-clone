@@ -17,7 +17,7 @@ export const createSidebarItems = (t: TFunction<'translation', undefined>): ISid
   { icon: Search, label: t('sidebar.search') },
   { icon: Compass, label: t('sidebar.explore') },
   { icon: Film, label: t('sidebar.reels'), path: '/reels' },
-  { icon: MessageCircle, label: t('sidebar.messages') },
+  { icon: MessageCircle, label: t('sidebar.messages'), path: '/messages' },
   { icon: Heart, label: t('sidebar.notifications') },
   { icon: PlusSquare, label: t('sidebar.create') },
   { icon: Menu, label: t('sidebar.more') },

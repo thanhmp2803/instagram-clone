@@ -33,6 +33,7 @@ export function BottomNavigation() {
   // Determine active item based on current route
   const currentActiveIndex = (() => {
     if (pathname === '/reels') return 2
+    if (pathname === '/messages') return 4
     if (pathname === '/profile') return 5
     if (pathname === '/') return 0
     return activeIndex
@@ -63,6 +64,8 @@ export function BottomNavigation() {
       router.push('/')
     } else if (index === 2) {
       router.push('/reels')
+    } else if (index === 4) {
+      router.push('/messages')
     }
   }
 
@@ -77,7 +80,15 @@ export function BottomNavigation() {
 
   const handleCloseModal = () => {
     setShowCreateModal(false)
-    setActiveIndex(pathname === '/reels' ? 2 : pathname === '/profile' ? 5 : 0)
+    setActiveIndex(
+      pathname === '/reels'
+        ? 2
+        : pathname === '/messages'
+          ? 4
+          : pathname === '/profile'
+            ? 5
+            : 0,
+    )
   }
 
   return (
@@ -116,7 +127,7 @@ export function BottomNavigation() {
                 }`}
               >
                 <Image
-                  src={user ? '/images/conmeo.jpg' : '/images/nonuser.png'}
+                  src={user?.avatar || (user ? '/images/conmeo.jpg' : '/images/nonuser.png')}
                   alt="Profile"
                   width={24}
                   height={24}
@@ -130,7 +141,9 @@ export function BottomNavigation() {
                 isOpen={showProfileMenu}
                 onClose={() => {
                   setShowProfileMenu(false)
-                  setActiveIndex(pathname === '/reels' ? 2 : 0)
+                  setActiveIndex(
+                    pathname === '/reels' ? 2 : pathname === '/messages' ? 4 : 0,
+                  )
                 }}
                 username={user.name}
                 position="bottom"

@@ -1,22 +1,30 @@
 'use client'
-import { Plus } from 'lucide-react'
+import { Plus, type LucideIcon } from 'lucide-react'
 import Image from 'next/image'
 import {
-  mockUserProfile,
-  mockUserPosts,
-  mockUserReels,
-  mockUserTagged,
   createProfileTabs,
   createProfileTabContents,
+  getUserProfileData,
 } from '@mocks'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import { useMounted } from '@hooks'
+import { useMounted, useAuth } from '@hooks'
 
 export function Profile() {
   const { t } = useTranslation()
   const mounted = useMounted()
-  const user = mockUserProfile
+  const { user: authUser } = useAuth()
+
+  // Dynamically load profile and galleries based on the logged-in user
+  const {
+    profile: user,
+    posts,
+    reels,
+    tagged,
+  } = useMemo(() => {
+    return getUserProfileData(authUser?.username || authUser?.name || authUser?.id)
+  }, [authUser])
+
   const [activeTab, setActiveTab] = useState<'posts' | 'saved' | 'tagged'>('posts')
 
   if (!mounted) {
@@ -26,11 +34,11 @@ export function Profile() {
   const getTabData = () => {
     switch (activeTab) {
       case 'posts':
-        return mockUserPosts
+        return posts
       case 'saved':
-        return mockUserReels
+        return reels
       case 'tagged':
-        return mockUserTagged
+        return tagged
       default:
         return []
     }
@@ -49,7 +57,7 @@ export function Profile() {
     }
   }
 
-  const renderEmptyState = (Icon: typeof Plus, message: string) => (
+  const renderEmptyState = (Icon: LucideIcon, message: string) => (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="w-16 h-16 rounded-full border-2 border-white flex items-center justify-center mb-4">
         <Icon size={32} />
@@ -148,83 +156,69 @@ export function Profile() {
                 <span className="font-semibold">{user.posts}</span>
                 <span className="text-gray-400 ml-1">{t('profile.posts')}</span>
               </div>
-              <div className="cursor-pointer">
+              <div>
                 <span className="font-semibold">{user.followers}</span>
                 <span className="text-gray-400 ml-1">{t('profile.followers')}</span>
               </div>
-              <div className="cursor-pointer">
+              <div>
                 <span className="font-semibold">{user.following}</span>
                 <span className="text-gray-400 ml-1">{t('profile.following')}</span>
               </div>
             </div>
 
-            {/* Desktop: Name and Bio */}
-            <div className="hidden lg:block">
-              <div className="font-semibold text-sm mb-1">{user.fullName}</div>
-              {user.bio && <div className="text-sm text-gray-300">{user.bio}</div>}
+            {/* Bio */}
+            <div>
+              <h2 className="font-semibold text-sm lg:text-base">{user.fullName}</h2>
+              {user.bio && (
+                <p className="text-sm text-gray-300 mt-1 whitespace-pre-line">{user.bio}</p>
+              )}
             </div>
           </div>
         </div>
 
-        {/* Mobile: Name and Bio */}
-        <div className="font-semibold text-base pt-1 pb-5 ml-1 lg:hidden">
-          <div className="mb-1">{user.fullName}</div>
-          {user.bio && <div className="text-base text-gray-300 font-normal">{user.bio}</div>}
-        </div>
-
-        {/* New Story Circle */}
-        <div className="flex gap-6 mb-6 lg:mb-11">
-          <div className="flex flex-col items-center">
-            <div className="w-16 h-16 lg:w-20 lg:h-20 rounded-full border-2 border-gray-700 flex items-center justify-center cursor-pointer mb-1">
-              <Plus size={24} className="text-white lg:size-8" />
-            </div>
-            <span className="text-xs text-gray-300">{t('profile.new_story')}</span>
+        {/* Mobile: Stats */}
+        <div className="flex justify-around py-3 border-t border-gray-800 lg:hidden text-center">
+          <div>
+            <div className="font-semibold">{user.posts}</div>
+            <div className="text-xs text-gray-400">{t('profile.posts')}</div>
+          </div>
+          <div>
+            <div className="font-semibold">{user.followers}</div>
+            <div className="text-xs text-gray-400">{t('profile.followers')}</div>
+          </div>
+          <div>
+            <div className="font-semibold">{user.following}</div>
+            <div className="text-xs text-gray-400">{t('profile.following')}</div>
           </div>
         </div>
-      </div>
-      {/* Stats - Mobile only */}
-      <div className="flex text-center border-t border-gray-800 lg:hidden">
-        <div className="flex-1 py-1.5">
-          <div className="text-lg font-semibold">{user.posts}</div>
-          <div className="text-sm text-gray-400">{t('profile.posts')}</div>
-        </div>
-        <div className="flex-1 py-1.5">
-          <div className="text-lg font-semibold cursor-pointer">{user.followers}</div>
-          <div className="text-sm text-gray-400">{t('profile.followers')}</div>
-        </div>
-        <div className="flex-1 py-1.5">
-          <div className="text-lg font-semibold cursor-pointer">{user.following}</div>
-          <div className="text-sm text-gray-400">{t('profile.following')}</div>
-        </div>
-      </div>
 
-      {/* Tabs */}
-      <div className="border-b border-gray-800 lg:max-w-4xl lg:mx-auto w-full">
-        <div className="flex justify-around">
-          {createProfileTabs().map((tab) => {
+        {/* Tabs */}
+        <div className="flex justify-around border-t border-gray-800 mt-6 lg:justify-center lg:gap-16">
+          {createProfileTabs(t).map((tab) => {
             const Icon = tab.icon
             const isActive = activeTab === tab.id
             return (
-              <div key={tab.id} className="flex-1 flex flex-col items-center">
-                <button
-                  onClick={() => setActiveTab(tab.id)}
-                  className="py-2 transition-colors cursor-pointer"
-                >
-                  <Icon size={24} className={isActive ? 'text-white' : 'text-gray-400'} />
-                </button>
-                <div
-                  className={`w-1/2 h-0.5 transition-colors ${
-                    isActive ? 'bg-white' : 'bg-transparent'
-                  }`}
-                />
-              </div>
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as 'posts' | 'saved' | 'tagged')}
+                className={`flex items-center gap-1.5 py-3 lg:py-4 -mt-px border-t transition-colors cursor-pointer ${
+                  isActive
+                    ? 'border-white text-white font-semibold'
+                    : 'border-transparent text-gray-400 hover:text-gray-300'
+                }`}
+              >
+                <Icon size={tab.size} />
+                <span className="text-xs tracking-wider lg:text-xs font-semibold">
+                  {tab.label}
+                </span>
+              </button>
             )
           })}
         </div>
-      </div>
 
-      {/* Tab Content */}
-      <div className="lg:max-w-4xl lg:mx-auto w-full">{renderGrid()}</div>
+        {/* Posts/Reels/Tagged Grid */}
+        {renderGrid()}
+      </div>
     </div>
   )
 }

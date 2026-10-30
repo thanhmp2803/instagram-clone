@@ -6,31 +6,47 @@ import { VideoPlayer } from './VideoPlayer'
 import { ReelSidebar } from './ReelSidebar'
 import { ReelInfo } from './ReelInfo'
 import type { IReelItemProps } from '@types'
+import { useAuth } from '@hooks'
+import { createClient, isSupabaseConfigured } from '@/utils/supabase/client'
 
 export function ReelItem({ reel, isActive, isGlobalMuted, onToggleGlobalMute }: IReelItemProps) {
+  const { user } = useAuth()
   const [isLiked, setIsLiked] = useState<boolean>(reel.isLiked ?? false)
   const [likesCount, setLikesCount] = useState<number>(reel.likesCount)
   const [isSaved, setIsSaved] = useState<boolean>(reel.isSaved ?? false)
   const [showHeartBurst, setShowHeartBurst] = useState<boolean>(false)
 
   // Toggle like action
-  const handleToggleLike = useCallback(() => {
-    setIsLiked((prev) => {
-      const nextState = !prev
-      setLikesCount((count) => (nextState ? count + 1 : count - 1))
-      return nextState
-    })
-  }, [])
+  const handleToggleLike = useCallback(async () => {
+    const nextState = !isLiked
+    setIsLiked(nextState)
+    setLikesCount((count) => (nextState ? count + 1 : Math.max(0, count - 1)))
+
+    if (isSupabaseConfigured() && user?.id) {
+      try {
+        const supabase = createClient()
+        if (nextState) {
+          await supabase.from('reel_likes').upsert({ user_id: user.id, reel_id: reel.id })
+        } else {
+          await supabase
+            .from('reel_likes')
+            .delete()
+            .match({ user_id: user.id, reel_id: reel.id })
+        }
+      } catch (err) {
+        console.error('Failed to toggle like on Supabase:', err)
+      }
+    }
+  }, [isLiked, reel.id, user?.id])
 
   // Double tap triggers like with burst animation
   const handleDoubleTap = useCallback(() => {
     if (!isLiked) {
-      setIsLiked(true)
-      setLikesCount((count) => count + 1)
+      handleToggleLike()
     }
     setShowHeartBurst(true)
     setTimeout(() => setShowHeartBurst(false), 900)
-  }, [isLiked])
+  }, [isLiked, handleToggleLike])
 
   // Toggle save action
   const handleToggleSave = useCallback(() => {

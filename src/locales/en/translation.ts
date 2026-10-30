@@ -60,6 +60,8 @@ const en = {
     edit_profile: 'Edit profile',
     view_archive: 'View archive',
     posts: 'posts',
+    saved: 'saved',
+    tagged: 'tagged',
     followers: 'followers',
     following: 'following',
     new_story: 'New',

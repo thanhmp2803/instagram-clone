@@ -1,6 +1,8 @@
 'use client'
+
 import { useAuth, useMounted } from '@hooks'
 import { useState } from 'react'
+import type { FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslation } from 'react-i18next'
 import { Cake } from 'lucide-react'
@@ -9,17 +11,19 @@ import Link from 'next/link'
 export default function BirthdayPage() {
   const mounted = useMounted()
   const { t } = useTranslation()
-  const { login } = useAuth()
+  const { login, signUp } = useAuth()
   const router = useRouter()
   const months = t('birthday.months', { returnObjects: true }) as string[]
   const [day, setDay] = useState('')
   const [month, setMonth] = useState('')
   const [year, setYear] = useState('')
   const [error, setError] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+    setIsSubmitting(true)
 
     const yearNum = parseInt(year)
 
@@ -27,6 +31,7 @@ export default function BirthdayPage() {
     const currentYear = new Date().getFullYear()
     if (yearNum < 1900 || yearNum > currentYear - 13) {
       setError(t('birthday.error_year'))
+      setIsSubmitting(false)
       return
     }
 
@@ -34,17 +39,34 @@ export default function BirthdayPage() {
     const tempUserData = JSON.parse(localStorage.getItem('tempUser') || '{}')
 
     if (tempUserData.email) {
-      // Save user to users list
-      const existingUsers = JSON.parse(localStorage.getItem('users') || '[]')
-      existingUsers.push(tempUserData)
-      localStorage.setItem('users', JSON.stringify(existingUsers))
+      try {
+        // Register in Supabase Auth if configured
+        if (signUp) {
+          await signUp(
+            tempUserData.email,
+            tempUserData.password,
+            tempUserData.name,
+            tempUserData.username || tempUserData.name,
+          )
+        }
 
-      // Remove temp user data
-      localStorage.removeItem('tempUser')
+        // Save user to users list for mock compatibility
+        const existingUsers = JSON.parse(localStorage.getItem('users') || '[]')
+        existingUsers.push(tempUserData)
+        localStorage.setItem('users', JSON.stringify(existingUsers))
 
-      // Auto login and redirect
-      login(tempUserData)
-      router.push('/')
+        // Remove temp user data
+        localStorage.removeItem('tempUser')
+
+        // Auto login and redirect
+        await login(tempUserData)
+        router.push('/')
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Registration failed'
+        setError(message)
+      } finally {
+        setIsSubmitting(false)
+      }
     } else {
       // If no temp data, redirect to register
       router.push('/register')
@@ -123,9 +145,10 @@ export default function BirthdayPage() {
             <p className="text-xs text-gray-400 text-center">{t('birthday.note')}</p>
             <button
               type="submit"
-              className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-lg transition cursor-pointer"
+              disabled={isSubmitting}
+              className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition cursor-pointer"
             >
-              {t('birthday.next_button')}
+              {isSubmitting ? '...' : t('birthday.next_button')}
             </button>
             <div className="text-center mb-4">
               <Link

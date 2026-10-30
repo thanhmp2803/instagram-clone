@@ -1,17 +1,19 @@
 'use client'
 import { X, Image as ImageIcon, SquarePlay, ArrowLeft } from 'lucide-react'
 import Image from 'next/image'
-import { useCreatePost } from '@hooks'
+import { useCreatePost, useAuth } from '@hooks'
 import { useTranslation } from 'react-i18next'
 import type { CreatePostProps } from '@types'
 
 export function CreatePost({ isOpen, onClose }: CreatePostProps) {
   const { t } = useTranslation()
+  const { user } = useAuth()
   const {
     dragActive,
     selectedFileUrl,
     step,
     caption,
+    isUploading,
     setCaption,
     handleDrag,
     handleDrop,
@@ -22,6 +24,9 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
   } = useCreatePost()
 
   if (!isOpen) return null
+
+  const currentUsername = user?.username || user?.name || 'user'
+  const currentAvatar = user?.avatar || '/images/conmeo.jpg'
 
   return (
     <div
@@ -38,7 +43,8 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
           {selectedFileUrl && (
             <button
               onClick={handleGoBack}
-              className="absolute left-4 p-2 hover:bg-gray-800 rounded transition-colors text-white"
+              disabled={isUploading}
+              className="absolute left-4 p-2 hover:bg-gray-800 rounded transition-colors text-white disabled:opacity-50"
             >
               <ArrowLeft size={20} />
             </button>
@@ -54,14 +60,17 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
                   ? handleNext
                   : onClose
             }
-            className={`absolute right-4 p-2 rounded transition-colors ${
+            disabled={isUploading}
+            className={`absolute right-4 p-2 rounded transition-colors disabled:opacity-50 ${
               selectedFileUrl
                 ? 'text-blue-500 hover:text-blue-400 font-semibold'
                 : 'hover:bg-gray-800 text-white'
             }`}
           >
             {step === 'caption' ? (
-              <span className="text-sm">{t('create_post.post')}</span>
+              <span className="text-sm">
+                {isUploading ? '...' : t('create_post.post')}
+              </span>
             ) : selectedFileUrl ? (
               <span className="text-sm">{t('create_post.next')}</span>
             ) : (
@@ -86,13 +95,15 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
                   {/* User Info */}
                   <div className="flex items-center mb-3">
                     <Image
-                      src="/images/conmeo.jpg"
+                      src={currentAvatar}
                       alt="Profile"
                       width={32}
                       height={32}
                       className="w-7 h-7 rounded-full object-cover aspect-square"
                     />
-                    <span className="ml-3 text-white font-semibold text-sm">pthanh2803</span>
+                    <span className="ml-3 text-white font-semibold text-sm">
+                      {currentUsername}
+                    </span>
                   </div>
 
                   {/* Caption Textarea */}
@@ -100,6 +111,7 @@ export function CreatePost({ isOpen, onClose }: CreatePostProps) {
                     value={caption}
                     onChange={(e) => setCaption(e.target.value)}
                     placeholder={t('create_post.caption_placeholder')}
+                    disabled={isUploading}
                     className="w-full h-10 resize-none border-none outline-none text-sm text-white placeholder-gray-400 bg-transparent"
                     maxLength={2200}
                   />
