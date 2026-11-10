@@ -1,0 +1,46 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120">
+  <defs>
+    <!-- Vibrant Meta AI Gradient -->
+    <linearGradient id="metaRingGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#0064E0" />
+      <stop offset="30%" stop-color="#0099FF" />
+      <stop offset="65%" stop-color="#A855F7" />
+      <stop offset="100%" stop-color="#EC4899" />
+    </linearGradient>
+    <radialGradient id="innerGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="#090d16" />
+      <stop offset="90%" stop-color="#1e1b4b" stop-opacity="0.6" />
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.3" />
+    </radialGradient>
+    <filter id="softGlow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3.5" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- Dark Background Circle -->
+  <circle cx="60" cy="60" r="58" fill="#0b0f19" />
+
+  <!-- Outer Ambient Glow Ring -->
+  <circle
+    cx="60"
+    cy="60"
+    r="44"
+    stroke="url(#metaRingGrad)"
+    stroke-width="13"
+    fill="none"
+    filter="url(#softGlow)"
+    opacity="0.95"
+  />
+
+  <!-- Inner Dark Core with Subtle Depth -->
+  <circle cx="60" cy="60" r="34" fill="url(#innerGlow)" />
+
+  <!-- Center Meta AI Sparkle Accent -->
+  <circle cx="48" cy="46" r="3.5" fill="#67E8F9" opacity="0.9" />
+  <circle cx="72" cy="70" r="2.5" fill="#F472B6" opacity="0.8" />
+</svg>
+

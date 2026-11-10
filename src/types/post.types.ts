@@ -1,5 +1,5 @@
 export interface Post {
-  id: number
+  id: number | string
   username: string
   avatar: string
   image: string
@@ -7,4 +7,6 @@ export interface Post {
   likes: number
   comments: number
   time: string
+  created_at?: string
+  userId?: string
 }
